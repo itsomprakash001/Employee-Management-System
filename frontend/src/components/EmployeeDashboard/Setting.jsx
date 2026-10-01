@@ -1,108 +1,256 @@
 import React, { useState } from "react";
 import axios from "axios";
+import {
+  useUser,
+  useReverification,
+} from "@clerk/react";
+
+import { useAuth } from "../../context/useAuth";
 
 const Setting = () => {
-  const [form, setForm] = useState({
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  const { user } = useUser();
+  const { getToken } = useAuth();
 
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+
+  const [step, setStep] = useState("email");
+
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [pendingEmailAddress, setPendingEmailAddress] =
+    useState(null);
 
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const currentEmail =
+    user?.primaryEmailAddress?.emailAddress || "";
+
+  
+
+  const createEmailAddress = useReverification(
+    async (newEmail) => {
+      return await user.createEmailAddress({
+        email: newEmail,
+      });
+    }
+  );
 
 
-  const clearForm = () => {
-    setForm({
-      oldPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-  };
-
-
-  const changePassword = async (e) => {
+  const sendOtp = async (e) => {
     e.preventDefault();
 
+    setMessage("");
     setError("");
-    setSuccess("");
 
+    const newEmail = email.trim().toLowerCase();
 
-    // Check password match
-    if (form.newPassword !== form.confirmPassword) {
-
-      setError(
-        "New Password and Confirm Password do not match"
-      );
-
-      clearForm();
-
+    if (!newEmail) {
+      setError("Please enter a new email address.");
       return;
     }
 
+    if (
+      newEmail ===
+      currentEmail.trim().toLowerCase()
+    ) {
+      setError(
+        "Please enter a different email address."
+      );
+      return;
+    }
+
+    if (!user) {
+      setError(
+        "User information is not available."
+      );
+      return;
+    }
 
     try {
       setLoading(true);
 
+      
 
-      const res = await axios.put(
-        "http://localhost:3000/api/auth/setting",
-        form,
+      const emailAddress =
+        await createEmailAddress(newEmail);
+
+      if (!emailAddress) {
+        setError(
+          "Unable to create the new email address."
+        );
+        return;
+      }
+
+      
+      setPendingEmailAddress(emailAddress);
+
+      
+
+      await emailAddress.prepareVerification({
+        strategy: "email_code",
+      });
+
+      setStep("otp");
+
+      setMessage(
+        "Verification OTP has been sent to your new email address."
+      );
+    } catch (err) {
+      console.log(
+        "SEND EMAIL OTP ERROR:",
+        err
+      );
+
+      setError(
+        err?.errors?.[0]?.message ||
+          "Unable to send verification OTP."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
+
+  const verifyOtp = async (e) => {
+    e.preventDefault();
+
+    setMessage("");
+    setError("");
+
+    if (!otp.trim()) {
+      setError("Please enter the OTP.");
+      return;
+    }
+
+    if (!pendingEmailAddress) {
+      setError(
+        "Email verification session expired. Please request a new OTP."
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      
+
+      const verification =
+        await pendingEmailAddress.attemptVerification(
+          {
+            code: otp.trim(),
+          }
+        );
+
+      if (
+        verification?.verification?.status !==
+        "verified"
+      ) {
+        setError(
+          "OTP verification was not completed."
+        );
+        return;
+      }
+
+      
+
+      await user.update({
+        primaryEmailAddressId:
+          pendingEmailAddress.id,
+      });
+
+     
+
+      const token = await getToken();
+
+      if (!token) {
+        setError(
+          "Authentication token not available."
+        );
+        return;
+      }
+
+      
+
+      const newEmail =
+        pendingEmailAddress.emailAddress
+          .trim()
+          .toLowerCase();
+
+      const response = await axios.put(
+        "http://localhost:5000/api/auth/update-email",
+        {
+          email: newEmail,
+        },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-
-      if (res.data.success) {
-
-        setSuccess(
-          "Password Changed Successfully"
+      if (!response.data.success) {
+        setError(
+          response.data.error ||
+            "Failed to update email in database."
         );
-
-        clearForm();
-
+        return;
       }
 
+      
 
-    } catch (err) {
-
-      setError(
-        err.response?.data?.error || "Something went wrong"
+      setMessage(
+        "Login email updated successfully."
       );
 
+      setEmail("");
+      setOtp("");
+      setPendingEmailAddress(null);
+      setStep("email");
+    } catch (err) {
+      console.log(
+        "VERIFY EMAIL OTP ERROR:",
+        err
+      );
 
-      // Clear password fields after wrong password/error
-      clearForm();
-
-
+      setError(
+        err?.response?.data?.error ||
+          err?.errors?.[0]?.message ||
+          "Invalid or expired OTP."
+      );
     } finally {
-
       setLoading(false);
-
     }
   };
 
+  
+
+  const cancelOtp = () => {
+    setStep("email");
+    setEmail("");
+    setOtp("");
+    setPendingEmailAddress(null);
+    setMessage("");
+    setError("");
+  };
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white shadow-lg rounded-lg p-6">
 
-
       <h2 className="text-2xl font-bold text-center mb-6 text-teal-600">
-        Password Update
+        Login Settings
       </h2>
 
+     
+
+      {message && (
+        <p className="text-green-600 text-center font-medium mb-4">
+          {message}
+        </p>
+      )}
+
+      
 
       {error && (
         <p className="text-red-600 text-center font-medium mb-4">
@@ -110,66 +258,110 @@ const Setting = () => {
         </p>
       )}
 
+      
 
-      {success && (
-        <p className="text-green-600 text-center font-medium mb-4">
-          {success}
+      <div className="mb-6">
+        <p className="text-gray-600 text-sm">
+          Current Login Email
         </p>
+
+        <p className="font-medium mt-1 break-all">
+          {currentEmail || "Not available"}
+        </p>
+      </div>
+
+      
+
+      {step === "email" && (
+        <form onSubmit={sendOtp}>
+
+          <label className="block text-sm font-medium mb-2">
+            New Login Email
+          </label>
+
+          <input
+            type="email"
+            placeholder="Enter new email"
+            value={email}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+            className="w-full border p-3 rounded mb-6 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full text-white p-3 rounded transition duration-200 ${
+              loading
+                ? "bg-teal-400 cursor-not-allowed"
+                : "bg-teal-600 hover:bg-teal-700 cursor-pointer"
+            }`}
+          >
+            {loading
+              ? "Sending OTP..."
+              : "Send OTP"}
+          </button>
+
+        </form>
       )}
 
+      
 
+      {step === "otp" && (
+        <form onSubmit={verifyOtp}>
 
-      <form onSubmit={changePassword}>
+          <p className="text-sm text-gray-600 mb-2">
+            Verification OTP sent to:
+          </p>
 
+          <p className="font-medium mb-5 break-all">
+            {email}
+          </p>
 
-        <input
-          type="password"
-          name="oldPassword"
-          placeholder="Old Password"
-          value={form.oldPassword}
-          onChange={handleChange}
-          className="w-full border p-3 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-teal-500"
-          required
-        />
+          <label className="block text-sm font-medium mb-2">
+            Verification OTP
+          </label>
 
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) =>
+              setOtp(e.target.value)
+            }
+            className="w-full border p-3 rounded mb-5 text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-teal-500"
+            required
+          />
 
-        <input
-          type="password"
-          name="newPassword"
-          placeholder="New Password"
-          value={form.newPassword}
-          onChange={handleChange}
-          className="w-full border p-3 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-teal-500"
-          required
-        />
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full text-white p-3 rounded transition duration-200 ${
+              loading
+                ? "bg-teal-400 cursor-not-allowed"
+                : "bg-teal-600 hover:bg-teal-700 cursor-pointer"
+            }`}
+          >
+            {loading
+              ? "Updating..."
+              : "Verify OTP & Update Email"}
+          </button>
 
+          <button
+            type="button"
+            onClick={cancelOtp}
+            disabled={loading}
+            className="w-full mt-3 p-3 rounded border border-gray-300 hover:bg-gray-100"
+          >
+            Change Email
+          </button>
 
-        <input
-          type="password"
-          name="confirmPassword"
-          placeholder="Confirm Password"
-          value={form.confirmPassword}
-          onChange={handleChange}
-          className="w-full border p-3 rounded mb-6 focus:outline-none focus:ring-2 focus:ring-teal-500"
-          required
-        />
-
-
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full text-white p-3 rounded transition duration-200 ${
-            loading
-              ? "bg-teal-400 cursor-not-allowed"
-              : "bg-teal-600 hover:bg-teal-700 cursor-pointer"
-          }`}
-        >
-          {loading ? "Changing..." : "Change Password"}
-        </button>
-
-
-      </form>
-
+        </form>
+      )}
 
     </div>
   );

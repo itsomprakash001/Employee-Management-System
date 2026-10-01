@@ -4,7 +4,6 @@ import { getDashboard } from "../controllers/dashboardController.js";
 
 const router = express.Router();
 
-// ================= ADMIN DASHBOARD =================
 router.get("/", authMiddleware, getDashboard);
 
 export default router;

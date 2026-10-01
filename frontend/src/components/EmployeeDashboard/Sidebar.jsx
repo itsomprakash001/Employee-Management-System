@@ -17,10 +17,10 @@ const Sidebar = () => {
         <h2 className="text-xl font-bold">Employee Portal</h2>
       </div>
 
-      {/* Menu */}
+      
       <div className="mt-5 px-3 space-y-2">
 
-        {/* Dashboard */}
+       
         <NavLink
           to="/employee-dashboard"
           end
@@ -36,7 +36,7 @@ const Sidebar = () => {
           <span className="font-medium">Dashboard</span>
         </NavLink>
 
-        {/* Profile */}
+        
         <NavLink
           to="/employee-dashboard/profile"
           className={({ isActive }) =>
@@ -51,7 +51,7 @@ const Sidebar = () => {
           <span className="font-medium">My Profile</span>
         </NavLink>
 
-        {/* Apply Leave */}
+        
         <NavLink
           to="/employee-dashboard/apply-leave"
           className={({ isActive }) =>
@@ -66,7 +66,7 @@ const Sidebar = () => {
           <span className="font-medium">Apply Leave</span>
         </NavLink>
 
-        {/* My Leaves */}
+        
         <NavLink
           to="/employee-dashboard/my-leaves"
           className={({ isActive }) =>
@@ -81,7 +81,7 @@ const Sidebar = () => {
           <span className="font-medium">My Leaves</span>
         </NavLink>
 
-        {/* Salary */}
+        
         <NavLink
           to="/employee-dashboard/salary"
           className={({ isActive }) =>

@@ -1,13 +1,37 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../../context/useAuth";
+
+const roleHierarchy = {
+  admin: 5,
+  manager: 4,
+  hr: 3,
+  tl: 2,
+  employee: 1,
+};
+
+const canManageRole = (actorRole, targetRole) => {
+  const actorLevel = roleHierarchy[actorRole];
+  const targetLevel = roleHierarchy[targetRole];
+
+  if (
+    actorLevel === undefined ||
+    targetLevel === undefined
+  ) {
+    return false;
+  }
+
+  return actorLevel > targetLevel;
+};
 
 const AddSalary = () => {
   const navigate = useNavigate();
+  const { user, getToken } = useAuth();
 
   const [employees, setEmployees] = useState([]);
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successMessage, setSuccessMessage] =
+    useState("");
 
   const [formData, setFormData] = useState({
     employeeId: "",
@@ -19,28 +43,74 @@ const AddSalary = () => {
     status: "",
   });
 
+ 
+
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
+        const token = await getToken();
+
+        if (!token) {
+          console.log("CLERK TOKEN NOT FOUND");
+          return;
+        }
+
         const response = await axios.get(
-          "http://localhost:3000/api/employee",
+          "http://localhost:5000/api/employee",
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
 
         if (response.data.success) {
-          setEmployees(response.data.employees);
+          const accessibleEmployees =
+            (response.data.employees || []).filter(
+              (employee) => {
+                if (!user) {
+                  return false;
+                }
+
+                // Employee cannot add salary
+                if (
+                  user.role === "employee"
+                ) {
+                  return false;
+                }
+
+                return canManageRole(
+                  user.role,
+                  employee.role
+                );
+              }
+            );
+
+          setEmployees(
+            accessibleEmployees
+          );
         }
       } catch (error) {
-        console.log(error);
+        console.log(
+          "FETCH EMPLOYEES ERROR:",
+          error.response?.status,
+          error.response?.data ||
+            error.message
+        );
+
+        alert(
+          error.response?.data?.error ||
+            "Failed to fetch employees"
+        );
       }
     };
 
-    fetchEmployees();
-  }, []);
+    if (getToken && user) {
+      fetchEmployees();
+    }
+  }, [getToken, user]);
+
+  // ================= HANDLE CHANGE =================
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,62 +120,164 @@ const AddSalary = () => {
       [name]: value,
     };
 
-    const basic = Number(updatedForm.basicSalary) || 0;
-    const allowance = Number(updatedForm.allowances) || 0;
-    const deduction = Number(updatedForm.deductions) || 0;
+    const basic =
+      Number(updatedForm.basicSalary) || 0;
 
-    updatedForm.netSalary = basic + allowance - deduction;
+    const allowance =
+      Number(updatedForm.allowances) || 0;
+
+    const deduction =
+      Number(updatedForm.deductions) || 0;
+
+    updatedForm.netSalary =
+      basic + allowance - deduction;
 
     setFormData(updatedForm);
   };
 
+  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Employee should never reach this page
+    if (
+      !user ||
+      user.role === "employee"
+    ) {
+      alert(
+        "You are not allowed to add salary."
+      );
+      return;
+    }
+
+    // Validate selected employee
+    const selectedEmployee =
+      employees.find(
+        (employee) =>
+          employee._id ===
+          formData.employeeId
+      );
+
+    if (!selectedEmployee) {
+      alert(
+        "Please select a valid employee."
+      );
+      return;
+    }
+
+    // Frontend hierarchy check
+    if (
+      !canManageRole(
+        user.role,
+        selectedEmployee.role
+      )
+    ) {
+      alert(
+        "You are not allowed to manage this employee's salary."
+      );
+      return;
+    }
+
     try {
+      const token = await getToken();
+
+      if (!token) {
+        alert(
+          "Authentication token not found. Please login again."
+        );
+        return;
+      }
+
       const response = await axios.post(
-        "http://localhost:3000/api/salary/add",
+        "http://localhost:5000/api/salary/add",
         formData,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
       if (response.data.success) {
-        setSuccessMessage("Salary Added Successfully!");
+        setSuccessMessage(
+          "Salary Added Successfully!"
+        );
 
         setTimeout(() => {
-          navigate("/admin-dashboard/salary");
+          navigate(
+            "/admin-dashboard/salary"
+          );
         }, 2000);
       }
-
     } catch (error) {
-      console.log(error);
+      console.log(
+        "ADD SALARY ERROR:",
+        error.response?.status,
+        error.response?.data ||
+          error.message
+      );
 
       alert(
-        error.response?.data?.error || "Failed to add salary"
+        error.response?.data?.error ||
+          "Failed to add salary"
       );
     }
   };
 
+  
+
+  const canAddSalary =
+    user &&
+    [
+      "admin",
+      "manager",
+      "hr",
+      "tl",
+    ].includes(user.role);
+
+  
+
+  if (!canAddSalary) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+        <div className="bg-white shadow-lg rounded-xl p-8 text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">
+            Access Denied
+          </h2>
+
+          <p className="text-gray-600">
+            You are not allowed to add salary records.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-100 p-3 min-h-screen">
+
       <div className="max-w-2xl mx-auto">
 
         <div className="bg-white rounded-xl shadow-md border overflow-hidden">
 
+          {/* Header */}
+
           <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-5 py-3">
+
             <h2 className="text-xl font-bold text-white">
               Add Salary
             </h2>
+
             <p className="text-teal-100 text-xs">
               Create employee salary record
             </p>
+
           </div>
 
           <div className="p-4">
+
+            {/* Success Message */}
 
             {successMessage && (
               <div className="mb-4 p-3 rounded-lg bg-green-100 text-green-700 font-semibold text-center">
@@ -117,131 +289,213 @@ const AddSalary = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
+                {/* Employee */}
+
                 <div>
-                  <label className="block text-sm font-semibold mb-1">
+
+                  <label
+                    htmlFor="employeeId"
+                    className="block text-sm font-semibold mb-1"
+                  >
                     Employee
                   </label>
 
                   <select
+                    id="employeeId"
                     name="employeeId"
                     value={formData.employeeId}
                     onChange={handleChange}
+                    autoComplete="off"
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   >
+
                     <option value="">
                       Select Employee
                     </option>
 
-                    {employees.map((emp) => (
-                      <option key={emp._id} value={emp._id}>
-                        {emp.employeeId} - {emp.name}
-                      </option>
-                    ))}
+                    {employees.map(
+                      (employee) => (
+                        <option
+                          key={employee._id}
+                          value={employee._id}
+                        >
+                          {employee.employeeId} -{" "}
+                          {employee.name} (
+                          {employee.role})
+                        </option>
+                      )
+                    )}
 
                   </select>
+
+                  {employees.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      No employees available for your role.
+                    </p>
+                  )}
+
                 </div>
 
+                {/* Basic Salary */}
+
                 <div>
-                  <label className="block text-sm font-semibold mb-1">
+
+                  <label
+                    htmlFor="basicSalary"
+                    className="block text-sm font-semibold mb-1"
+                  >
                     Basic Salary
                   </label>
 
                   <input
-                    type="number"
+                    id="basicSalary"
                     name="basicSalary"
+                    type="number"
                     value={formData.basicSalary}
                     onChange={handleChange}
+                    min="0"
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
+
                 </div>
 
+                {/* Allowances */}
+
                 <div>
-                  <label className="block text-sm font-semibold mb-1">
+
+                  <label
+                    htmlFor="allowances"
+                    className="block text-sm font-semibold mb-1"
+                  >
                     Allowances
                   </label>
 
                   <input
-                    type="number"
+                    id="allowances"
                     name="allowances"
+                    type="number"
                     value={formData.allowances}
                     onChange={handleChange}
+                    min="0"
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
+
                 </div>
 
+                {/* Deductions */}
+
                 <div>
-                  <label className="block text-sm font-semibold mb-1">
+
+                  <label
+                    htmlFor="deductions"
+                    className="block text-sm font-semibold mb-1"
+                  >
                     Deductions
                   </label>
 
                   <input
-                    type="number"
+                    id="deductions"
                     name="deductions"
+                    type="number"
                     value={formData.deductions}
                     onChange={handleChange}
+                    min="0"
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
+
                 </div>
 
+                {/* Net Salary */}
+
                 <div>
-                  <label className="block text-sm font-semibold mb-1">
+
+                  <label
+                    htmlFor="netSalary"
+                    className="block text-sm font-semibold mb-1"
+                  >
                     Net Salary
                   </label>
 
                   <input
+                    id="netSalary"
+                    name="netSalary"
                     type="number"
                     value={formData.netSalary}
                     readOnly
                     className="w-full border rounded-md px-3 py-2 text-sm bg-gray-100"
                   />
+
                 </div>
 
+                {/* Pay Date */}
+
                 <div>
-                  <label className="block text-sm font-semibold mb-1">
+
+                  <label
+                    htmlFor="payDate"
+                    className="block text-sm font-semibold mb-1"
+                  >
                     Pay Date
                   </label>
 
                   <input
-                    type="date"
+                    id="payDate"
                     name="payDate"
+                    type="date"
                     value={formData.payDate}
                     onChange={handleChange}
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
+
                 </div>
 
+                {/* Status */}
+
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-1">
+
+                  <label
+                    htmlFor="status"
+                    className="block text-sm font-semibold mb-1"
+                  >
                     Status
                   </label>
 
                   <select
+                    id="status"
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   >
+
                     <option value="">
                       Select Status
                     </option>
+
                     <option value="Paid">
                       Paid
                     </option>
+
                     <option value="Pending">
                       Pending
                     </option>
+
                   </select>
+
                 </div>
 
               </div>
 
+              {/* Button */}
+
               <div className="flex justify-end mt-4">
 
                 <button
+                  id="add-salary"
                   type="submit"
                   className="bg-teal-600 hover:bg-teal-700 hover:scale-105 hover:-translate-y-1 hover:shadow-xl active:scale-95 transition-all duration-300 cursor-pointer text-white font-semibold text-sm px-7 py-2 rounded-lg"
                 >
@@ -257,9 +511,9 @@ const AddSalary = () => {
         </div>
 
       </div>
+
     </div>
   );
 };
 
 export default AddSalary;
-

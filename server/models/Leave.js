@@ -8,6 +8,12 @@ const leaveSchema = new mongoose.Schema(
       required: true,
     },
 
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
+
     leaveType: {
       type: String,
       enum: [

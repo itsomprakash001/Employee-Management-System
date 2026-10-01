@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../../context/useAuth";
 
 const EditDepartment = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { getToken } = useAuth();
 
   const [department, setDepartment] = useState({
     dep_name: "",
@@ -13,51 +15,88 @@ const EditDepartment = () => {
 
   const [depLoading, setDepLoading] = useState(false);
 
+
   useEffect(() => {
     const fetchDepartment = async () => {
       setDepLoading(true);
 
       try {
+        const token = await getToken();
+
+        if (!token) {
+          console.log("CLERK TOKEN NOT FOUND");
+          return;
+        }
+
         const response = await axios.get(
-  `http://localhost:3000/api/department/${id}`,
-  {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
-  }
-);
+          `http://localhost:5000/api/department/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (response.data.success) {
-          setDepartment(response.data.department);
+          setDepartment({
+            dep_name: response.data.department?.dep_name || "",
+            description:
+              response.data.department?.description || "",
+          });
         }
       } catch (error) {
-        alert(error.response?.data?.error || "Something went wrong");
+        console.log(
+          "GET DEPARTMENT ERROR:",
+          error.response?.status,
+          error.response?.data || error.message
+        );
+
+        alert(
+          error.response?.data?.error ||
+            "Something went wrong"
+        );
       } finally {
         setDepLoading(false);
       }
     };
 
-    fetchDepartment();
-  }, [id]);
+    if (getToken && id) {
+      fetchDepartment();
+    }
+  }, [id, getToken]);
+
+  // ================= HANDLE CHANGE =================
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setDepartment({
-      ...department,
+
+    setDepartment((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
+
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      const token = await getToken();
+
+      if (!token) {
+        alert(
+          "Authentication token not found. Please login again."
+        );
+        return;
+      }
+
       const response = await axios.put(
-        `http://localhost:3000/api/department/${id}`,
+        `http://localhost:5000/api/department/${id}`,
         department,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -66,21 +105,38 @@ const EditDepartment = () => {
         navigate("/admin-dashboard/departments");
       }
     } catch (error) {
-      if (error.response && !error.response.data.success) {
-        alert(error.response.data.error);
-      }
+      console.log(
+        "UPDATE DEPARTMENT ERROR:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+
+      alert(
+        error.response?.data?.error ||
+          "Unable to update department"
+      );
     }
   };
 
+
   if (depLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center mt-10">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
   }
+
 
   return (
     <div className="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-md shadow-md w-96">
-      <h2 className="text-2xl font-bold mb-6">Edit Department</h2>
+
+      <h2 className="text-2xl font-bold mb-6">
+        Edit Department
+      </h2>
 
       <form onSubmit={handleSubmit}>
+
         <div>
           <label
             htmlFor="dep_name"
@@ -90,12 +146,14 @@ const EditDepartment = () => {
           </label>
 
           <input
-            type="text"
+            id="dep_name"
             name="dep_name"
+            type="text"
             value={department.dep_name}
             onChange={handleChange}
             placeholder="Enter Department Name"
-            className="mt-1 w-full p-2 border border-gray-300 rounded-md"
+            autoComplete="organization-title"
+            className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
             required
           />
         </div>
@@ -109,21 +167,25 @@ const EditDepartment = () => {
           </label>
 
           <textarea
+            id="description"
             name="description"
             value={department.description}
             onChange={handleChange}
             placeholder="Description"
-            className="mt-1 p-2 block w-full border border-gray-300 rounded-md"
+            autoComplete="off"
+            className="mt-1 p-2 block w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
             rows="4"
-          ></textarea>
+          />
         </div>
 
         <button
+          id="update-department"
           type="submit"
           className="w-full mt-6 bg-teal-600 hover:bg-teal-700 hover:scale-105 hover:shadow-lg transition-all duration-300 text-white font-bold py-2 px-4 rounded cursor-pointer"
         >
           Update Department
         </button>
+
       </form>
     </div>
   );

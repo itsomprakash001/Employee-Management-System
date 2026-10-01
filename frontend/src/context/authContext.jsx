@@ -1,58 +1,169 @@
-
 import axios from "axios";
-import React, { createContext, useContext, useState } from "react";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, {
+  createContext,
+  useEffect,
+  useState,
+} from "react";
 
-const userContext = createContext()
+import {
+  useAuth as useClerkAuth,
+  useClerk,
+} from "@clerk/react";
 
-const AuthContext = ({children}) => {
-    const [user, setUser] = useState(null)
-    const [loading, setLoading] = useState(true) 
-    
-    useEffect(() => {
+export const userContext = createContext();
+
+const AuthContext = ({ children }) => {
+  const {
+    isLoaded,
+    isSignedIn,
+    getToken,
+  } = useClerkAuth();
+
+  const { signOut } = useClerk();
+
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  
+  useEffect(() => {
+    let cancelled = false;
+
     const verifyUser = async () => {
-        try {
-            const token = localStorage.getItem('token')
-            if(token) {
-            const response = await axios.get('http://localhost:3000/api/auth/verify' ,{
-                headers: {
-      Authorization: `Bearer ${token}`,
-        }},)
-        console.log(response)
-            if(response.data.success) {
-                setUser(response.data.user)
-            }
-        } else {
-            setUser(null);
-            setLoading(false)
+      // Clerk is still loading
+      if (!isLoaded) {
+        return;
+      }
+
+      
+      const registrationInProgress =
+        sessionStorage.getItem(
+          "ems_registration_in_progress"
+        ) === "true";
+
+      if (registrationInProgress) {
+        if (!cancelled) {
+          setLoading(false);
         }
-        } catch (error) {
-            console.log(error)
-              if(error.response && !error.response.data.error){
-                 setUser(null)
-              }
-                } finally {
-                    setLoading(false)
-                }
-    }
-    verifyUser()
-    },[])
 
-    const login = (user) => {
-       setUser(user)
+        return;
+      }
+
+      
+      if (!isSignedIn) {
+        if (!cancelled) {
+          setUser(null);
+          setLoading(false);
+        }
+
+        return;
+      }
+
+      try {
+        const token = await getToken();
+
+        if (!token) {
+          if (!cancelled) {
+            setUser(null);
+            setLoading(false);
+          }
+
+          return;
+        }
+
+        console.log("CLERK TOKEN FOUND");
+
+        const response = await axios.get(
+          "http://localhost:5000/api/auth/verify",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        console.log(
+          "EMS USER VERIFY RESPONSE:",
+          response.data
+        );
+
+        if (
+          !cancelled &&
+          response.data.success
+        ) {
+          setUser(response.data.user);
+        }
+      } catch (error) {
+        console.log(
+          "VERIFY USER ERROR:",
+          error.response?.status,
+          error.response?.data ||
+            error.message
+        );
+
+        if (!cancelled) {
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    verifyUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isLoaded,
+    isSignedIn,
+    getToken,
+  ]);
+
+  
+  const login = (userData) => {
+    console.log(
+      "EMS USER LOGGED IN:",
+      userData
+    );
+
+    setUser(userData);
+    setLoading(false);
+  };
+
+  
+  const logout = async () => {
+    try {
+      sessionStorage.removeItem(
+        "ems_registration_in_progress"
+      );
+
+      await signOut();
+
+      setUser(null);
+      setLoading(false);
+    } catch (error) {
+      console.log(
+        "LOGOUT ERROR:",
+        error
+      );
     }
-    const logout = () => {
-    setUser(null)
-    localStorage.removeItem("token")
-    }
+  };
+
   return (
-    <userContext.Provider value={{user, login, logout, loading}}>
-        {children}
+    <userContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        loading,
+        getToken,
+      }}
+    >
+      {children}
     </userContext.Provider>
-  )
-}
-
-export const useAuth = ()  => useContext(userContext)
+  );
+};
 
 export default AuthContext;

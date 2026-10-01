@@ -1,4 +1,5 @@
 import React from 'react'
+import { useAuth } from "../../context/useAuth";
 
 const SummaryCard = ({icon, text, number, color}) => {
   return (

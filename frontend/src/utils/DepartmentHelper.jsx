@@ -1,27 +1,54 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/useAuth";
 
-export const DepartmentButtons = ({ DepId }) => {
+export const DepartmentButtons = ({
+  DepId,
+  onDepartmentDelete,
+  canManage,
+}) => {
   const navigate = useNavigate();
+  const { getToken } = useAuth();
 
   const handleDelete = async (id) => {
+    if (!canManage) {
+      alert("You are not authorized to delete departments.");
+      return;
+    }
+
     try {
+      const token = await getToken();
+
+      if (!token) {
+        alert(
+          "Authentication token not found. Please login again."
+        );
+        return;
+      }
+
       const API_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:3000";
+        import.meta.env.VITE_API_URL ||
+        "http://localhost:5000";
 
       const response = await axios.delete(
         `${API_URL}/api/department/${id}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
       if (response.data.success) {
+        if (onDepartmentDelete) {
+          onDepartmentDelete(id);
+        }
+
         const message = document.createElement("div");
 
-        message.innerText = "Department deleted successfully!";
+        message.innerText =
+          "Department deleted successfully!";
+
         message.className =
           "fixed top-5 right-5 bg-red-100 text-red-700 px-5 py-3 rounded-lg shadow-lg font-semibold z-50";
 
@@ -33,14 +60,22 @@ export const DepartmentButtons = ({ DepId }) => {
         }, 2000);
       }
     } catch (error) {
-      console.log(error);
+      console.log(
+        "DELETE DEPARTMENT ERROR:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
 
       alert(
         error.response?.data?.error ||
-          "Something went wrong"
+          "Something went wrong while deleting department"
       );
     }
   };
+
+  if (!canManage) {
+    return null;
+  }
 
   return (
     <div className="flex space-x-3">
@@ -58,7 +93,9 @@ export const DepartmentButtons = ({ DepId }) => {
           duration-300
         "
         onClick={() =>
-          navigate(`/admin-dashboard/departments/edit/${DepId}`)
+          navigate(
+            `/admin-dashboard/departments/edit/${DepId}`
+          )
         }
       >
         Edit
@@ -84,21 +121,3 @@ export const DepartmentButtons = ({ DepId }) => {
     </div>
   );
 };
-
-export const columns = [
-  {
-    name: "S No",
-    selector: (row) => row.sno,
-    width: "80px",
-  },
-  {
-    name: "Department Name",
-    selector: (row) => row.dep_name,
-    sortable: true,
-  },
-  {
-    name: "Action",
-    cell: (row) => row.action,
-    center: true,
-  },
-];

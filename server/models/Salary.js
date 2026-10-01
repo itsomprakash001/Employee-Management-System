@@ -8,6 +8,12 @@ const salarySchema = new mongoose.Schema(
       required: true,
     },
 
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+    },
+
     basicSalary: {
       type: Number,
       required: true,

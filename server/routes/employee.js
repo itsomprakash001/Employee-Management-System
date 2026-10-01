@@ -1,5 +1,6 @@
 import express from "express";
 import authMiddleware from "../middleware/authMiddleware.js";
+
 import {
   addEmployee,
   upload,
@@ -30,7 +31,12 @@ router.get("/profile/me", authMiddleware, getEmployeeProfile);
 router.get("/:id", authMiddleware, getEmployee);
 
 // Update employee
-router.put("/:id", authMiddleware, updateEmployee);
+router.put(
+  "/:id",
+  authMiddleware,
+  upload.single("image"),
+  updateEmployee
+);
 
 // Delete employee
 router.delete("/:id", authMiddleware, deleteEmployee);

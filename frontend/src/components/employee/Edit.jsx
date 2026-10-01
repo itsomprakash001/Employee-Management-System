@@ -2,14 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
+import { useAuth } from "../../context/useAuth";
 
 const Edit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { getToken } = useAuth();
 
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [successMessage, setSuccessMessage] = useState("");
 
   const [formData, setFormData] = useState({
@@ -26,23 +27,38 @@ const Edit = () => {
 
   useEffect(() => {
     const getDepartments = async () => {
-      const data = await fetchDepartments();
-      setDepartments(data);
+      try {
+        const data = await fetchDepartments(getToken);
+        setDepartments(data);
+      } catch (error) {
+        console.log(
+          "FETCH DEPARTMENTS ERROR:",
+          error
+        );
+      }
     };
 
-    getDepartments();
-  }, []);
+    if (getToken) {
+      getDepartments();
+    }
+  }, [getToken]);
 
-
-
+  
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
+        const token = await getToken();
+
+        if (!token) {
+          console.log("CLERK TOKEN NOT FOUND");
+          return;
+        }
+
         const response = await axios.get(
-          `http://localhost:3000/api/employee/${id}`,
+          `http://localhost:5000/api/employee/${id}`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -52,27 +68,41 @@ const Edit = () => {
 
           setFormData({
             employeeId: emp.employeeId || "",
-            dob: emp.dob ? emp.dob.substring(0, 10) : "",
+            dob: emp.dob
+              ? emp.dob.substring(0, 10)
+              : "",
             gender: emp.gender || "",
-            maritalStatus: emp.maritalStatus || "",
-            designation: emp.designation || "",
-            department: emp.department?._id || "",
+            maritalStatus:
+              emp.maritalStatus || "",
+            designation:
+              emp.designation || "",
+            department:
+              emp.department?._id || "",
             salary: emp.salary || "",
             role: emp.userId?.role || "",
           });
         }
-
       } catch (error) {
-        alert(error.response?.data?.error || "Failed to fetch employee");
+        console.log(
+          "FETCH EMPLOYEE ERROR:",
+          error.response?.status,
+          error.response?.data ||
+            error.message
+        );
+
+        alert(
+          error.response?.data?.error ||
+            "Failed to fetch employee"
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEmployee();
-
-  }, [id]);
-
+    if (getToken && id) {
+      fetchEmployee();
+    }
+  }, [id, getToken]);
 
 
   const handleChange = (e) => {
@@ -83,45 +113,62 @@ const Edit = () => {
   };
 
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      const token = await getToken();
+
+      if (!token) {
+        alert(
+          "Authentication token not found. Please login again."
+        );
+        return;
+      }
 
       const response = await axios.put(
-        `http://localhost:3000/api/employee/${id}`,
+        `http://localhost:5000/api/employee/${id}`,
         formData,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-
       if (response.data.success) {
-
-        setSuccessMessage("Employee updated successfully!");
+        setSuccessMessage(
+          "Employee updated successfully!"
+        );
 
         setTimeout(() => {
-          navigate("/admin-dashboard/employees");
+          navigate(
+            "/admin-dashboard/employees"
+          );
         }, 2000);
-
       }
-
-
     } catch (error) {
-      alert(error.response?.data?.error || "Failed to update employee");
+      console.log(
+        "UPDATE EMPLOYEE ERROR:",
+        error.response?.status,
+        error.response?.data ||
+          error.message
+      );
+
+      alert(
+        error.response?.data?.error ||
+          "Failed to update employee"
+      );
     }
   };
 
-
-
   if (loading) {
-    return <div className="text-center mt-10">Loading...</div>;
+    return (
+      <div className="text-center mt-10">
+        Loading...
+      </div>
+    );
   }
-
 
 
   return (
@@ -131,21 +178,17 @@ const Edit = () => {
         Edit Employee
       </h2>
 
-
-      {/* Success Message */}
       {successMessage && (
         <div className="mb-5 p-3 rounded-lg bg-green-100 text-green-700 font-semibold text-center">
           {successMessage}
         </div>
       )}
 
-
-
       <form onSubmit={handleSubmit}>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-
+         
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Employee ID
@@ -160,8 +203,6 @@ const Edit = () => {
               required
             />
           </div>
-
-
 
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -178,8 +219,7 @@ const Edit = () => {
             />
           </div>
 
-
-
+          
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Gender
@@ -192,16 +232,22 @@ const Edit = () => {
               className="mt-1 p-2 w-full border rounded-md"
               required
             >
-              <option value="">Select Gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
+              <option value="">
+                Select Gender
+              </option>
+              <option value="male">
+                Male
+              </option>
+              <option value="female">
+                Female
+              </option>
+              <option value="other">
+                Other
+              </option>
             </select>
-
           </div>
 
-
-
+          
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Marital Status
@@ -214,17 +260,25 @@ const Edit = () => {
               className="mt-1 p-2 w-full border rounded-md"
               required
             >
-              <option value="">Select Status</option>
-              <option value="single">Single</option>
-              <option value="married">Married</option>
-              <option value="divorced">Divorced</option>
-              <option value="widowed">Widowed</option>
+              <option value="">
+                Select Status
+              </option>
+              <option value="single">
+                Single
+              </option>
+              <option value="married">
+                Married
+              </option>
+              <option value="divorced">
+                Divorced
+              </option>
+              <option value="widowed">
+                Widowed
+              </option>
             </select>
-
           </div>
 
-
-
+          
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Designation
@@ -240,8 +294,7 @@ const Edit = () => {
             />
           </div>
 
-
-
+         
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Salary
@@ -257,8 +310,7 @@ const Edit = () => {
             />
           </div>
 
-
-
+         
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Department
@@ -271,19 +323,22 @@ const Edit = () => {
               className="mt-1 p-2 w-full border rounded-md"
               required
             >
-              <option value="">Select Department</option>
+              <option value="">
+                Select Department
+              </option>
 
               {departments.map((dep) => (
-                <option key={dep._id} value={dep._id}>
+                <option
+                  key={dep._id}
+                  value={dep._id}
+                >
                   {dep.dep_name}
                 </option>
               ))}
-
             </select>
           </div>
 
-
-
+          {/* Role */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Role
@@ -296,17 +351,21 @@ const Edit = () => {
               className="mt-1 p-2 w-full border rounded-md"
               required
             >
-              <option value="">Select Role</option>
-              <option value="admin">Admin</option>
-              <option value="employee">Employee</option>
-            </select>
+              <option value="">
+                Select Role
+              </option>
 
+              <option value="admin">
+                Admin
+              </option>
+
+              <option value="employee">
+                Employee
+              </option>
+            </select>
           </div>
 
-
         </div>
-
-
 
         <div className="mt-6 flex justify-end">
 
@@ -319,12 +378,9 @@ const Edit = () => {
 
         </div>
 
-
       </form>
-
     </div>
   );
 };
 
 export default Edit;
-
