@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const View = () => {
   const { id } = useParams();
@@ -22,7 +23,7 @@ const View = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:5000/api/employee/${id}`,
+          `${API_URL}/api/employee/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -77,7 +78,7 @@ const View = () => {
       }
 
       const response = await axios.delete(
-        `http://localhost:5000/api/employee/${id}`,
+        `${API_URL}/api/employee/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -88,7 +89,6 @@ const View = () => {
       if (response.data.success) {
         alert("Employee deleted successfully.");
 
-        
         navigate("/admin-dashboard/employees");
       } else {
         alert(
@@ -129,7 +129,6 @@ const View = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        
         <div className="flex justify-center items-start">
           <img
             src={
@@ -144,7 +143,6 @@ const View = () => {
           />
         </div>
 
-        
         <div className="md:col-span-2">
           <div className="grid grid-cols-2 gap-y-4 text-[17px]">
 
@@ -222,7 +220,6 @@ const View = () => {
         </div>
       </div>
 
-      
       <div className="mt-10 pt-6 border-t border-gray-200 flex justify-end">
         <button
           type="button"

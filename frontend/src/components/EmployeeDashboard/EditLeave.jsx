@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const EditLeave = () => {
   const { id } = useParams();
@@ -20,8 +21,6 @@ const EditLeave = () => {
   const [updating, setUpdating] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  
-
   useEffect(() => {
     const fetchLeave = async () => {
       try {
@@ -37,7 +36,7 @@ const EditLeave = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:5000/api/leave/${id}`,
+          `${API_URL}/api/leave/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -108,8 +107,6 @@ const EditLeave = () => {
     }
   }, [id, getToken, user, navigate]);
 
-  
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -119,7 +116,6 @@ const EditLeave = () => {
     }));
   };
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -164,7 +160,7 @@ const EditLeave = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:5000/api/leave/edit/${id}`,
+        `${API_URL}/api/leave/edit/${id}`,
         {
           leaveType: leave.leaveType,
           fromDate: leave.fromDate,
@@ -206,8 +202,6 @@ const EditLeave = () => {
     }
   };
 
-  
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -218,7 +212,6 @@ const EditLeave = () => {
     );
   }
 
-  
   if (!user || user.role !== "employee") {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
@@ -237,7 +230,6 @@ const EditLeave = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-
       <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-xl p-6">
 
         <h2 className="text-2xl font-bold text-teal-700 mb-6">
@@ -254,11 +246,7 @@ const EditLeave = () => {
           onSubmit={handleSubmit}
           className="space-y-5"
         >
-
-          {/* Leave Type */}
-
           <div>
-
             <label
               htmlFor="leaveType"
               className="block mb-2 font-medium"
@@ -274,7 +262,6 @@ const EditLeave = () => {
               className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
               required
             >
-
               <option value="">
                 Select Leave
               </option>
@@ -294,17 +281,11 @@ const EditLeave = () => {
               <option value="Emergency Leave">
                 Emergency Leave
               </option>
-
             </select>
-
           </div>
 
-          
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
             <div>
-
               <label
                 htmlFor="fromDate"
                 className="block mb-2 font-medium"
@@ -324,11 +305,9 @@ const EditLeave = () => {
                 className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 required
               />
-
             </div>
 
             <div>
-
               <label
                 htmlFor="toDate"
                 className="block mb-2 font-medium"
@@ -348,15 +327,10 @@ const EditLeave = () => {
                 className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 required
               />
-
             </div>
-
           </div>
 
-          
-
           <div>
-
             <label
               htmlFor="reason"
               className="block mb-2 font-medium"
@@ -374,13 +348,9 @@ const EditLeave = () => {
               className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
               required
             />
-
           </div>
 
-         
-
           <div className="flex justify-end gap-3">
-
             <button
               type="button"
               onClick={() =>
@@ -402,13 +372,9 @@ const EditLeave = () => {
                 ? "Updating..."
                 : "Update Leave"}
             </button>
-
           </div>
-
         </form>
-
       </div>
-
     </div>
   );
 };

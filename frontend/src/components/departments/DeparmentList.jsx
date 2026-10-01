@@ -5,6 +5,7 @@ import { DepartmentButtons } from "../../utils/DepartmentHelper";
 import { columns } from "../../utils/DepartmentColumns";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const DepartmentList = () => {
   const { user, getToken } = useAuth();
@@ -37,7 +38,7 @@ const DepartmentList = () => {
         }
 
         const response = await axios.get(
-          "http://localhost:5000/api/department",
+          `${API_URL}/api/department`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const SalaryHistory = () => {
   const { id } = useParams();
@@ -12,8 +13,6 @@ const SalaryHistory = () => {
   const [salaryHistory, setSalaryHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
-
-  
 
   useEffect(() => {
     const fetchSalaryHistory = async () => {
@@ -30,7 +29,7 @@ const SalaryHistory = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:5000/api/salary/history/${id}`,
+          `${API_URL}/api/salary/history/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -77,8 +76,6 @@ const SalaryHistory = () => {
     }
   }, [id, user, getToken]);
 
-  
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -89,13 +86,10 @@ const SalaryHistory = () => {
     );
   }
 
-  
-
   if (accessDenied) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
         <div className="bg-white shadow-lg rounded-xl p-8 text-center">
-
           <h2 className="text-2xl font-bold text-red-600 mb-2">
             Access Denied
           </h2>
@@ -113,7 +107,6 @@ const SalaryHistory = () => {
           >
             Back to Salary
           </button>
-
         </div>
       </div>
     );
@@ -121,13 +114,11 @@ const SalaryHistory = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-
       <div className="max-w-6xl mx-auto">
 
         {/* Header */}
 
         <div className="flex justify-between items-center mb-6">
-
           <h2 className="text-3xl font-bold text-gray-800">
             Salary History
           </h2>
@@ -141,19 +132,16 @@ const SalaryHistory = () => {
           >
             Back
           </button>
-
         </div>
 
         {/* Employee Details */}
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-
           <h3 className="text-xl font-semibold mb-4 text-teal-600">
             Employee Information
           </h3>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-
             <div>
               <p className="text-gray-500 text-sm">
                 Employee ID
@@ -203,21 +191,15 @@ const SalaryHistory = () => {
                 {salaryHistory.length}
               </p>
             </div>
-
           </div>
-
         </div>
 
         {/* Salary Table */}
 
         <div className="bg-white rounded-xl shadow-md overflow-x-auto">
-
           <table className="w-full min-w-[900px]">
-
             <thead className="bg-teal-600 text-white">
-
               <tr>
-
                 <th className="py-3 px-4">
                   S.No
                 </th>
@@ -245,13 +227,10 @@ const SalaryHistory = () => {
                 <th className="py-3 px-4">
                   Status
                 </th>
-
               </tr>
-
             </thead>
 
             <tbody>
-
               {salaryHistory.length > 0 ? (
                 salaryHistory.map(
                   (salary, index) => (
@@ -259,7 +238,6 @@ const SalaryHistory = () => {
                       key={salary._id}
                       className="border-b hover:bg-gray-100 transition"
                     >
-
                       <td className="text-center py-3">
                         {index + 1}
                       </td>
@@ -285,7 +263,6 @@ const SalaryHistory = () => {
                       </td>
 
                       <td className="text-center">
-
                         <span
                           className={`inline-block px-4 py-1 rounded-full text-sm font-semibold text-white ${
                             salary.status ===
@@ -296,33 +273,24 @@ const SalaryHistory = () => {
                         >
                           {salary.status}
                         </span>
-
                       </td>
-
                     </tr>
                   )
                 )
               ) : (
                 <tr>
-
                   <td
                     colSpan="7"
                     className="text-center py-8 text-gray-500"
                   >
                     No Salary Records Found
                   </td>
-
                 </tr>
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       </div>
-
     </div>
   );
 };

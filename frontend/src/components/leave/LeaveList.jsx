@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const roleHierarchy = {
   admin: 5,
@@ -31,8 +32,6 @@ const LeaveList = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  
-
   const fetchLeaves = async () => {
     try {
       setLoading(true);
@@ -45,7 +44,7 @@ const LeaveList = () => {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/leave",
+        `${API_URL}/api/leave`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -78,8 +77,6 @@ const LeaveList = () => {
     }
   }, [user, getToken]);
 
-  
-
   const updateStatus = async (id, status) => {
     try {
       const token = await getToken();
@@ -92,7 +89,7 @@ const LeaveList = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:5000/api/leave/${id}/status`,
+        `${API_URL}/api/leave/${id}/status`,
         { status },
         {
           headers: {
@@ -118,8 +115,6 @@ const LeaveList = () => {
     }
   };
 
-  
-
   const getStatusColor = (status) => {
     switch (status) {
       case "Approved":
@@ -132,8 +127,6 @@ const LeaveList = () => {
         return "bg-yellow-100 text-yellow-700";
     }
   };
-
-  
 
   const canManageLeave = (leave) => {
     if (!user || !leave) {
@@ -156,7 +149,6 @@ const LeaveList = () => {
     );
   };
 
-  
   const filteredLeaves = leaves.filter((leave) => {
     const searchText = search
       .toLowerCase()
@@ -185,8 +177,6 @@ const LeaveList = () => {
     );
   });
 
-  
-
   if (loading) {
     return (
       <div className="h-[calc(100vh-64px)] bg-gray-100 flex items-center justify-center">
@@ -199,10 +189,7 @@ const LeaveList = () => {
 
   return (
     <div className="h-[calc(100vh-64px)] overflow-hidden bg-gray-100 p-3">
-
-      
       <div className="flex items-center justify-between mb-3">
-
         <h2 className="text-xl font-bold text-teal-700">
           Leave Management
         </h2>
@@ -228,21 +215,13 @@ const LeaveList = () => {
             focus:ring-teal-500
           "
         />
-
       </div>
 
-     
-
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-
         <div className="overflow-x-auto">
-
           <table className="w-full min-w-[900px] text-center text-[11px]">
-
             <thead className="bg-teal-600 text-white">
-
               <tr>
-
                 <th className="px-2 py-1.5">
                   S.No
                 </th>
@@ -282,16 +261,12 @@ const LeaveList = () => {
                 <th className="px-2 py-1.5">
                   Action
                 </th>
-
               </tr>
-
             </thead>
 
             <tbody>
-
               {filteredLeaves.length > 0 ? (
                 filteredLeaves.map((leave, index) => {
-
                   const canApproveReject =
                     leave.status === "Pending" &&
                     canManageLeave(leave);
@@ -305,7 +280,6 @@ const LeaveList = () => {
                         transition
                       "
                     >
-
                       <td className="px-2 py-1.5">
                         {index + 1}
                       </td>
@@ -347,7 +321,6 @@ const LeaveList = () => {
                       </td>
 
                       <td className="px-2 py-1.5">
-
                         <span
                           className={`
                             px-2
@@ -362,15 +335,11 @@ const LeaveList = () => {
                         >
                           {leave.status}
                         </span>
-
                       </td>
 
                       <td className="px-2 py-1.5">
-
                         {canApproveReject ? (
-
                           <div className="flex justify-center gap-1">
-
                             <button
                               type="button"
                               onClick={() =>
@@ -414,57 +383,38 @@ const LeaveList = () => {
                             >
                               Reject
                             </button>
-
                           </div>
-
                         ) : leave.status === "Pending" ? (
-
                           <span className="text-gray-500 text-[10px]">
                             Awaiting approval
                           </span>
-
                         ) : leave.status === "Approved" ? (
-
                           <span className="text-green-600 font-semibold text-[10px]">
                             Approved
                           </span>
-
                         ) : (
-
                           <span className="text-red-600 font-semibold text-[10px]">
                             Rejected
                           </span>
-
                         )}
-
                       </td>
-
                     </tr>
                   );
                 })
               ) : (
-
                 <tr>
-
                   <td
                     colSpan="10"
                     className="py-6 text-gray-500"
                   >
                     No matching leave requests found
                   </td>
-
                 </tr>
-
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       </div>
-
     </div>
   );
 };

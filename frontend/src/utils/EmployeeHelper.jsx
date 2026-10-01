@@ -1,8 +1,7 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-
-
+import API_URL from "../api";
 
 const roleHierarchy = {
   admin: 5,
@@ -31,8 +30,6 @@ const canManageRole = (
 
   return actorLevel > targetLevel;
 };
-
-
 
 export const columns = [
   {
@@ -109,8 +106,6 @@ export const columns = [
   },
 ];
 
-
-
 export const fetchDepartments = async (
   getToken
 ) => {
@@ -141,7 +136,7 @@ export const fetchDepartments = async (
 
     const response =
       await axios.get(
-        "http://localhost:5000/api/department",
+        `${API_URL}/api/department`,
         {
           headers: {
             Authorization:
@@ -168,8 +163,6 @@ export const fetchDepartments = async (
 
   return departments;
 };
-
-
 
 export const fetchEmployees = async (
   getToken
@@ -201,7 +194,7 @@ export const fetchEmployees = async (
 
     const response =
       await axios.get(
-        "http://localhost:5000/api/employee",
+        `${API_URL}/api/employee`,
         {
           headers: {
             Authorization:
@@ -228,8 +221,6 @@ export const fetchEmployees = async (
 
   return employees;
 };
-
-
 
 export const EmployeeButtons = ({
   row,
@@ -270,9 +261,6 @@ export const EmployeeButtons = ({
 
   return (
     <div className="flex items-center gap-1.5">
-
-     
-
       <button
         type="button"
         onClick={() =>
@@ -293,12 +281,8 @@ export const EmployeeButtons = ({
         View
       </button>
 
-     
-
       {canManage && (
         <>
-          
-
           <button
             type="button"
             onClick={() =>
@@ -319,8 +303,6 @@ export const EmployeeButtons = ({
             Edit
           </button>
 
-          
-
           <button
             type="button"
             onClick={() =>
@@ -340,8 +322,6 @@ export const EmployeeButtons = ({
           >
             Salary
           </button>
-
-          
 
           <button
             type="button"

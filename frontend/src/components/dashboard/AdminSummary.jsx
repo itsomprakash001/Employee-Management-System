@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import SummaryCard from "./SummaryCard";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 import {
   FaUsers,
@@ -29,7 +30,6 @@ const AdminSummary = () => {
 
   const [loading, setLoading] = useState(true);
 
-
   const getRoleName = () => {
     switch (user?.role) {
       case "admin":
@@ -49,7 +49,6 @@ const AdminSummary = () => {
     }
   };
 
-
   const fetchDashboard = async () => {
     try {
       const token = await getToken();
@@ -60,7 +59,7 @@ const AdminSummary = () => {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/dashboard",
+        `${API_URL}/api/dashboard`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -101,7 +100,6 @@ const AdminSummary = () => {
     }
   }, [user, getToken]);
 
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-60 text-xl font-bold">
@@ -116,7 +114,6 @@ const AdminSummary = () => {
       <h3 className="text-3xl font-bold mb-8">
         {getRoleName()}
       </h3>
-
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
@@ -149,7 +146,6 @@ const AdminSummary = () => {
         />
 
       </div>
-
 
       <div className="mt-12">
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const roleHierarchy = {
   admin: 5,
@@ -30,8 +31,7 @@ const AddSalary = () => {
   const { user, getToken } = useAuth();
 
   const [employees, setEmployees] = useState([]);
-  const [successMessage, setSuccessMessage] =
-    useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [formData, setFormData] = useState({
     employeeId: "",
@@ -42,8 +42,6 @@ const AddSalary = () => {
     payDate: "",
     status: "",
   });
-
- 
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -56,7 +54,7 @@ const AddSalary = () => {
         }
 
         const response = await axios.get(
-          "http://localhost:5000/api/employee",
+          `${API_URL}/api/employee`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -73,9 +71,7 @@ const AddSalary = () => {
                 }
 
                 // Employee cannot add salary
-                if (
-                  user.role === "employee"
-                ) {
+                if (user.role === "employee") {
                   return false;
                 }
 
@@ -86,9 +82,7 @@ const AddSalary = () => {
               }
             );
 
-          setEmployees(
-            accessibleEmployees
-          );
+          setEmployees(accessibleEmployees);
         }
       } catch (error) {
         console.log(
@@ -134,8 +128,6 @@ const AddSalary = () => {
 
     setFormData(updatedForm);
   };
-
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -190,7 +182,7 @@ const AddSalary = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/salary/add",
+        `${API_URL}/api/salary/add`,
         formData,
         {
           headers: {
@@ -225,8 +217,6 @@ const AddSalary = () => {
     }
   };
 
-  
-
   const canAddSalary =
     user &&
     [
@@ -235,8 +225,6 @@ const AddSalary = () => {
       "hr",
       "tl",
     ].includes(user.role);
-
-  
 
   if (!canAddSalary) {
     return (
@@ -256,15 +244,12 @@ const AddSalary = () => {
 
   return (
     <div className="bg-gray-100 p-3 min-h-screen">
-
       <div className="max-w-2xl mx-auto">
-
         <div className="bg-white rounded-xl shadow-md border overflow-hidden">
 
           {/* Header */}
 
           <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-5 py-3">
-
             <h2 className="text-xl font-bold text-white">
               Add Salary
             </h2>
@@ -272,7 +257,6 @@ const AddSalary = () => {
             <p className="text-teal-100 text-xs">
               Create employee salary record
             </p>
-
           </div>
 
           <div className="p-4">
@@ -286,13 +270,11 @@ const AddSalary = () => {
             )}
 
             <form onSubmit={handleSubmit}>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
                 {/* Employee */}
 
                 <div>
-
                   <label
                     htmlFor="employeeId"
                     className="block text-sm font-semibold mb-1"
@@ -309,7 +291,6 @@ const AddSalary = () => {
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   >
-
                     <option value="">
                       Select Employee
                     </option>
@@ -326,7 +307,6 @@ const AddSalary = () => {
                         </option>
                       )
                     )}
-
                   </select>
 
                   {employees.length === 0 && (
@@ -334,13 +314,11 @@ const AddSalary = () => {
                       No employees available for your role.
                     </p>
                   )}
-
                 </div>
 
                 {/* Basic Salary */}
 
                 <div>
-
                   <label
                     htmlFor="basicSalary"
                     className="block text-sm font-semibold mb-1"
@@ -358,13 +336,11 @@ const AddSalary = () => {
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
-
                 </div>
 
                 {/* Allowances */}
 
                 <div>
-
                   <label
                     htmlFor="allowances"
                     className="block text-sm font-semibold mb-1"
@@ -381,13 +357,11 @@ const AddSalary = () => {
                     min="0"
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
-
                 </div>
 
                 {/* Deductions */}
 
                 <div>
-
                   <label
                     htmlFor="deductions"
                     className="block text-sm font-semibold mb-1"
@@ -404,13 +378,11 @@ const AddSalary = () => {
                     min="0"
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
-
                 </div>
 
                 {/* Net Salary */}
 
                 <div>
-
                   <label
                     htmlFor="netSalary"
                     className="block text-sm font-semibold mb-1"
@@ -426,13 +398,11 @@ const AddSalary = () => {
                     readOnly
                     className="w-full border rounded-md px-3 py-2 text-sm bg-gray-100"
                   />
-
                 </div>
 
                 {/* Pay Date */}
 
                 <div>
-
                   <label
                     htmlFor="payDate"
                     className="block text-sm font-semibold mb-1"
@@ -449,13 +419,11 @@ const AddSalary = () => {
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
-
                 </div>
 
                 {/* Status */}
 
                 <div className="md:col-span-2">
-
                   <label
                     htmlFor="status"
                     className="block text-sm font-semibold mb-1"
@@ -471,7 +439,6 @@ const AddSalary = () => {
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   >
-
                     <option value="">
                       Select Status
                     </option>
@@ -483,17 +450,13 @@ const AddSalary = () => {
                     <option value="Pending">
                       Pending
                     </option>
-
                   </select>
-
                 </div>
-
               </div>
 
               {/* Button */}
 
               <div className="flex justify-end mt-4">
-
                 <button
                   id="add-salary"
                   type="submit"
@@ -501,17 +464,11 @@ const AddSalary = () => {
                 >
                   Add Salary
                 </button>
-
               </div>
-
             </form>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 };

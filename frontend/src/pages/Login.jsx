@@ -10,6 +10,7 @@ import {
 } from "@clerk/react";
 
 import { useAuth } from "../context/useAuth";
+import API_URL from "../api";
 
 const Login = () => {
   const [isRegister, setIsRegister] = useState(false);
@@ -42,7 +43,6 @@ const Login = () => {
 
   const { signUp, fetchStatus } = useSignUp();
 
-  
   useEffect(() => {
     if (loading) {
       return;
@@ -80,7 +80,6 @@ const Login = () => {
     console.log("UNKNOWN USER ROLE:", user.role);
   }, [user, loading, navigate]);
 
-  
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -115,7 +114,6 @@ const Login = () => {
         "true"
       );
 
-      
       const { error: createError } =
         await signUp.create({
           emailAddress: registerData.email.trim(),
@@ -147,7 +145,6 @@ const Login = () => {
         signUp.id
       );
 
-      
       const { error: sendCodeError } =
         await signUp.verifications.sendEmailCode();
 
@@ -205,7 +202,6 @@ const Login = () => {
     }
   };
 
-  
   const createEmsUser = async () => {
     console.log("CREATING EMS USER...");
 
@@ -220,7 +216,7 @@ const Login = () => {
     console.log("CLERK TOKEN FOUND");
 
     const response = await axios.post(
-      "http://localhost:5000/api/auth/register",
+      `${API_URL}/api/auth/register`,
       {
         name: registerData.name,
         dob: registerData.dob,
@@ -250,7 +246,6 @@ const Login = () => {
       );
     }
 
-    
     login(response.data.user);
 
     sessionStorage.removeItem(
@@ -281,7 +276,6 @@ const Login = () => {
     );
   };
 
-  
   const completeClerkAndEmsRegistration =
     async () => {
       try {
@@ -295,7 +289,6 @@ const Login = () => {
           signUp.missingFields
         );
 
-        
         if (
           signUp.status ===
           "missing_requirements"
@@ -365,7 +358,6 @@ const Login = () => {
             updateData
           );
 
-          
           if (
             Object.keys(updateData).length > 0
           ) {
@@ -399,7 +391,6 @@ const Login = () => {
           );
         }
 
-        
         if (
           signUp.status ===
           "missing_requirements"
@@ -440,7 +431,6 @@ const Login = () => {
           return;
         }
 
-        
         console.log(
           "FINALIZING CLERK SIGNUP..."
         );
@@ -468,7 +458,6 @@ const Login = () => {
           "CLERK SIGNUP FINALIZED"
         );
 
-        
         await createEmsUser();
       } catch (error) {
         console.log(
@@ -573,7 +562,6 @@ const Login = () => {
         signUp.missingFields
       );
 
-      
       await completeClerkAndEmsRegistration();
     } catch (error) {
       console.log(
@@ -603,7 +591,6 @@ const Login = () => {
     }
   };
 
-  
   const handleMissingRequirements =
     async (e) => {
       e.preventDefault();
@@ -614,7 +601,6 @@ const Login = () => {
       await completeClerkAndEmsRegistration();
     };
 
-  
   const handleRegisterChange = (e) => {
     const { name, value } = e.target;
 
@@ -624,7 +610,6 @@ const Login = () => {
     }));
   };
 
-  
   const handleBackToLogin = async () => {
     setError(null);
     setSuccess(null);
@@ -658,7 +643,6 @@ const Login = () => {
     setIsRegister(false);
   };
 
-  
   const handleBackToRegister = () => {
     setError(null);
     setSuccess(null);
@@ -702,8 +686,6 @@ const Login = () => {
           rounded
         "
       >
-        
-
         {!isRegister ? (
           <>
             <h2 className="text-2xl font-bold mb-4">
@@ -809,8 +791,6 @@ const Login = () => {
           </>
         ) : (
           <>
-            
-
             <h2 className="text-2xl font-bold mb-4">
               Create Company Account
             </h2>
@@ -831,8 +811,6 @@ const Login = () => {
                 {success}
               </p>
             )}
-
-            
 
             {!showOtp ? (
               <form onSubmit={handleRegister}>
@@ -1007,8 +985,6 @@ const Login = () => {
                 </button>
               </form>
             ) : showMissingRequirements ? (
-              
-
               <form
                 onSubmit={
                   handleMissingRequirements
@@ -1180,8 +1156,6 @@ const Login = () => {
                 </button>
               </form>
             ) : (
-              
-
               <form onSubmit={handleVerifyOtp}>
                 <p className="text-gray-600 mb-4">
                   Enter the verification code
@@ -1347,5 +1321,3 @@ const Login = () => {
 };
 
 export default Login;
-
-

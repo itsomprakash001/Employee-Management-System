@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const Edit = () => {
   const navigate = useNavigate();
@@ -24,7 +25,6 @@ const Edit = () => {
     role: "",
   });
 
-
   useEffect(() => {
     const getDepartments = async () => {
       try {
@@ -43,7 +43,6 @@ const Edit = () => {
     }
   }, [getToken]);
 
-  
   useEffect(() => {
     const fetchEmployee = async () => {
       try {
@@ -55,7 +54,7 @@ const Edit = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:5000/api/employee/${id}`,
+          `${API_URL}/api/employee/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -104,14 +103,12 @@ const Edit = () => {
     }
   }, [id, getToken]);
 
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,7 +124,7 @@ const Edit = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:5000/api/employee/${id}`,
+        `${API_URL}/api/employee/${id}`,
         formData,
         {
           headers: {
@@ -170,7 +167,6 @@ const Edit = () => {
     );
   }
 
-
   return (
     <div className="max-w-4xl mx-auto mt-10 bg-white p-8 rounded-md shadow-md">
 
@@ -188,7 +184,6 @@ const Edit = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-         
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Employee ID
@@ -219,7 +214,6 @@ const Edit = () => {
             />
           </div>
 
-          
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Gender
@@ -247,7 +241,6 @@ const Edit = () => {
             </select>
           </div>
 
-          
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Marital Status
@@ -278,7 +271,6 @@ const Edit = () => {
             </select>
           </div>
 
-          
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Designation
@@ -294,7 +286,6 @@ const Edit = () => {
             />
           </div>
 
-         
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Salary
@@ -310,7 +301,6 @@ const Edit = () => {
             />
           </div>
 
-         
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Department

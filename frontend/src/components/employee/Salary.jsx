@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/authContext";
+import API_URL from "../../api";
 
 const Salary = () => {
   const { getToken } = useAuth();
@@ -19,7 +20,7 @@ const Salary = () => {
         }
 
         const response = await axios.get(
-          "http://localhost:5000/api/salary/my-salary",
+          `${API_URL}/api/salary/my-salary`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

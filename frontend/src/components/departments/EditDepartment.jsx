@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const EditDepartment = () => {
   const { id } = useParams();
@@ -14,7 +15,6 @@ const EditDepartment = () => {
   });
 
   const [depLoading, setDepLoading] = useState(false);
-
 
   useEffect(() => {
     const fetchDepartment = async () => {
@@ -29,7 +29,7 @@ const EditDepartment = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:5000/api/department/${id}`,
+          `${API_URL}/api/department/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -76,8 +76,6 @@ const EditDepartment = () => {
     }));
   };
 
-  
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -92,7 +90,7 @@ const EditDepartment = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:5000/api/department/${id}`,
+        `${API_URL}/api/department/${id}`,
         department,
         {
           headers: {
@@ -118,7 +116,6 @@ const EditDepartment = () => {
     }
   };
 
-
   if (depLoading) {
     return (
       <div className="flex justify-center items-center mt-10">
@@ -126,7 +123,6 @@ const EditDepartment = () => {
       </div>
     );
   }
-
 
   return (
     <div className="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-md shadow-md w-96">

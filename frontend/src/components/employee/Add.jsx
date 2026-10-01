@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchDepartments } from "../../utils/EmployeeHelper";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const Add = () => {
   const navigate = useNavigate();
@@ -12,7 +13,6 @@ const Add = () => {
   const [departments, setDepartments] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
 
   const roleOptions = {
     admin: [
@@ -46,8 +46,7 @@ const Add = () => {
     employee: [],
   };
 
-  const availableRoles =
-    roleOptions[user?.role] || [];
+  const availableRoles = roleOptions[user?.role] || [];
 
   const [formData, setFormData] = useState({
     name: "",
@@ -64,7 +63,6 @@ const Add = () => {
     image: null,
   });
 
-
   useEffect(() => {
     if (availableRoles.length > 0) {
       setFormData((prev) => ({
@@ -74,18 +72,13 @@ const Add = () => {
     }
   }, [user?.role]);
 
- 
-
   useEffect(() => {
     const getDepartments = async () => {
       try {
         const data = await fetchDepartments(getToken);
         setDepartments(data);
       } catch (error) {
-        console.log(
-          "GET DEPARTMENTS ERROR:",
-          error
-        );
+        console.log("GET DEPARTMENTS ERROR:", error);
       }
     };
 
@@ -94,17 +87,13 @@ const Add = () => {
     }
   }, [getToken]);
 
-
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "image") {
       setFormData((prev) => ({
         ...prev,
-        image:
-          files && files.length > 0
-            ? files[0]
-            : null,
+        image: files && files.length > 0 ? files[0] : null,
       }));
     } else {
       setFormData((prev) => ({
@@ -128,14 +117,8 @@ const Add = () => {
     const formDataObj = new FormData();
 
     Object.keys(formData).forEach((key) => {
-      if (
-        formData[key] !== null &&
-        formData[key] !== ""
-      ) {
-        formDataObj.append(
-          key,
-          formData[key]
-        );
+      if (formData[key] !== null && formData[key] !== "") {
+        formDataObj.append(key, formData[key]);
       }
     });
 
@@ -143,9 +126,7 @@ const Add = () => {
       const token = await getToken();
 
       if (!token) {
-        console.log(
-          "CLERK TOKEN NOT FOUND"
-        );
+        console.log("CLERK TOKEN NOT FOUND");
 
         alert(
           "Authentication token not found. Please login again."
@@ -154,12 +135,10 @@ const Add = () => {
         return;
       }
 
-      console.log(
-        "CLERK TOKEN FOUND FOR ADD EMPLOYEE"
-      );
+      console.log("CLERK TOKEN FOUND FOR ADD EMPLOYEE");
 
       const response = await axios.post(
-        "http://localhost:5000/api/employee/add",
+        `${API_URL}/api/employee/add`,
         formDataObj,
         {
           headers: {
@@ -174,17 +153,14 @@ const Add = () => {
         );
 
         setTimeout(() => {
-          navigate(
-            "/admin-dashboard/employees"
-          );
+          navigate("/admin-dashboard/employees");
         }, 2000);
       }
     } catch (error) {
       console.log(
         "ADD EMPLOYEE ERROR:",
         error.response?.status,
-        error.response?.data ||
-          error.message
+        error.response?.data || error.message
       );
 
       alert(
@@ -196,11 +172,7 @@ const Add = () => {
     }
   };
 
-
-  if (
-    user &&
-    availableRoles.length === 0
-  ) {
+  if (user && availableRoles.length === 0) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-5">
         <div className="bg-white p-8 rounded-lg shadow-md text-center">
@@ -231,7 +203,6 @@ const Add = () => {
         )}
 
         <form onSubmit={handleSubmit}>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <div>
@@ -274,7 +245,6 @@ const Add = () => {
               />
             </div>
 
-
             <div>
               <label
                 htmlFor="email"
@@ -301,7 +271,6 @@ const Add = () => {
               </p>
             </div>
 
-
             <div>
               <label
                 htmlFor="employeeId"
@@ -321,7 +290,6 @@ const Add = () => {
                 required
               />
             </div>
-
 
             <div>
               <label
@@ -343,7 +311,6 @@ const Add = () => {
               />
             </div>
 
-
             <div>
               <label
                 htmlFor="gender"
@@ -361,24 +328,12 @@ const Add = () => {
                 className="mt-1 p-2.5 w-full border border-gray-300 rounded-md"
                 required
               >
-                <option value="">
-                  Select Gender
-                </option>
-
-                <option value="male">
-                  Male
-                </option>
-
-                <option value="female">
-                  Female
-                </option>
-
-                <option value="other">
-                  Other
-                </option>
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
               </select>
             </div>
-
 
             <div>
               <label
@@ -397,29 +352,13 @@ const Add = () => {
                 className="mt-1 p-2.5 w-full border border-gray-300 rounded-md"
                 required
               >
-                <option value="">
-                  Select Status
-                </option>
-
-                <option value="single">
-                  Single
-                </option>
-
-                <option value="married">
-                  Married
-                </option>
-
-                <option value="divorced">
-                  Divorced
-                </option>
-
-                <option value="widowed">
-                  Widowed
-                </option>
+                <option value="">Select Status</option>
+                <option value="single">Single</option>
+                <option value="married">Married</option>
+                <option value="divorced">Divorced</option>
+                <option value="widowed">Widowed</option>
               </select>
             </div>
-
-           
 
             <div>
               <label
@@ -441,7 +380,6 @@ const Add = () => {
               />
             </div>
 
-
             <div>
               <label
                 htmlFor="department"
@@ -459,9 +397,7 @@ const Add = () => {
                 className="mt-1 p-2.5 w-full border border-gray-300 rounded-md"
                 required
               >
-                <option value="">
-                  Select Department
-                </option>
+                <option value="">Select Department</option>
 
                 {departments.map((dep) => (
                   <option
@@ -473,7 +409,6 @@ const Add = () => {
                 ))}
               </select>
             </div>
-
 
             <div>
               <label
@@ -496,7 +431,6 @@ const Add = () => {
               />
             </div>
 
-
             <div>
               <label
                 htmlFor="role"
@@ -513,9 +447,7 @@ const Add = () => {
                 className="mt-1 p-2.5 w-full border border-gray-300 rounded-md"
                 required
               >
-                <option value="">
-                  Select Role
-                </option>
+                <option value="">Select Role</option>
 
                 {availableRoles.map((role) => (
                   <option
@@ -527,7 +459,6 @@ const Add = () => {
                 ))}
               </select>
             </div>
-
 
             <div>
               <label
@@ -550,7 +481,6 @@ const Add = () => {
 
           </div>
 
-
           <div className="mt-5 flex justify-end">
             <button
               id="add-employee"
@@ -558,9 +488,7 @@ const Add = () => {
               disabled={loading}
               className="bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-md transition"
             >
-              {loading
-                ? "Adding..."
-                : "Add User"}
+              {loading ? "Adding..." : "Add User"}
             </button>
           </div>
 

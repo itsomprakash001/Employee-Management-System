@@ -1,8 +1,8 @@
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const EmployeeLeave = () => {
   const { id } = useParams();
@@ -10,8 +10,6 @@ const EmployeeLeave = () => {
 
   const [employee, setEmployee] = useState({});
   const [leaves, setLeaves] = useState([]);
-
- 
 
   useEffect(() => {
     const fetchLeaves = async () => {
@@ -24,7 +22,7 @@ const EmployeeLeave = () => {
         }
 
         const res = await axios.get(
-          `http://localhost:5000/api/leave/employee/${id}`,
+          `${API_URL}/api/leave/employee/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -55,7 +53,6 @@ const EmployeeLeave = () => {
     }
   }, [id, getToken]);
 
-  
   const badgeColor = (status) => {
     if (status === "Approved") {
       return "bg-green-100 text-green-700";
@@ -70,15 +67,12 @@ const EmployeeLeave = () => {
 
   return (
     <div className="p-6">
-
       <h2 className="text-3xl font-bold text-teal-700 mb-6">
         Employee Leave History
       </h2>
 
-      
       <div className="bg-white shadow-lg rounded-xl p-6 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
           <div>
             <p className="text-gray-500 text-sm">
               Employee Name
@@ -108,15 +102,11 @@ const EmployeeLeave = () => {
               {employee.employeeCode || "N/A"}
             </h3>
           </div>
-
         </div>
       </div>
 
-     
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-
         <table className="w-full">
-
           <thead className="bg-teal-600 text-white">
             <tr>
               <th className="p-3">S.No</th>
@@ -136,7 +126,6 @@ const EmployeeLeave = () => {
                   key={leave._id}
                   className="border-b text-center hover:bg-gray-50"
                 >
-
                   <td className="p-3">
                     {index + 1}
                   </td>
@@ -178,7 +167,6 @@ const EmployeeLeave = () => {
                       {leave.status}
                     </span>
                   </td>
-
                 </tr>
               ))
             ) : (
@@ -192,9 +180,7 @@ const EmployeeLeave = () => {
               </tr>
             )}
           </tbody>
-
         </table>
-
       </div>
     </div>
   );

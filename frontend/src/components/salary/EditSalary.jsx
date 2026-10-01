@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const roleHierarchy = {
   admin: 5,
@@ -46,8 +47,6 @@ const EditSalary = () => {
     status: "",
   });
 
-  
-
   useEffect(() => {
     const fetchSalary = async () => {
       try {
@@ -63,7 +62,7 @@ const EditSalary = () => {
         }
 
         const response = await axios.get(
-          `http://localhost:5000/api/salary/${id}`,
+          `${API_URL}/api/salary/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -147,7 +146,6 @@ const EditSalary = () => {
     }
   }, [id, user, getToken]);
 
-  
   const handleChange = (e) => {
     if (isPaid) return;
 
@@ -172,8 +170,6 @@ const EditSalary = () => {
 
     setFormData(updated);
   };
-
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -203,7 +199,7 @@ const EditSalary = () => {
       }
 
       const response = await axios.put(
-        `http://localhost:5000/api/salary/${id}`,
+        `${API_URL}/api/salary/${id}`,
         formData,
         {
           headers: {
@@ -237,8 +233,6 @@ const EditSalary = () => {
       );
     }
   };
-
-  
 
   if (loading) {
     return (
@@ -282,17 +276,14 @@ const EditSalary = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen p-4">
-
       <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
 
         {/* Header */}
 
         <div className="bg-teal-600 p-4">
-
           <h2 className="text-white text-xl font-bold">
             Edit Salary
           </h2>
-
         </div>
 
         <form
@@ -321,7 +312,6 @@ const EditSalary = () => {
             {/* Basic Salary */}
 
             <div>
-
               <label className="block mb-1 font-medium">
                 Basic Salary
               </label>
@@ -336,13 +326,11 @@ const EditSalary = () => {
                 required
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               />
-
             </div>
 
             {/* Allowances */}
 
             <div>
-
               <label className="block mb-1 font-medium">
                 Allowances
               </label>
@@ -356,13 +344,11 @@ const EditSalary = () => {
                 min="0"
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               />
-
             </div>
 
             {/* Deductions */}
 
             <div>
-
               <label className="block mb-1 font-medium">
                 Deductions
               </label>
@@ -376,13 +362,11 @@ const EditSalary = () => {
                 min="0"
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               />
-
             </div>
 
             {/* Net Salary */}
 
             <div>
-
               <label className="block mb-1 font-medium">
                 Net Salary
               </label>
@@ -393,13 +377,11 @@ const EditSalary = () => {
                 readOnly
                 className="w-full border rounded-md p-2 bg-gray-100"
               />
-
             </div>
 
             {/* Pay Date */}
 
             <div>
-
               <label className="block mb-1 font-medium">
                 Pay Date
               </label>
@@ -413,13 +395,11 @@ const EditSalary = () => {
                 required
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               />
-
             </div>
 
             {/* Status */}
 
             <div>
-
               <label className="block mb-1 font-medium">
                 Status
               </label>
@@ -431,7 +411,6 @@ const EditSalary = () => {
                 disabled={isPaid}
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               >
-
                 <option value="Pending">
                   Pending
                 </option>
@@ -439,17 +418,13 @@ const EditSalary = () => {
                 <option value="Paid">
                   Paid
                 </option>
-
               </select>
-
             </div>
-
           </div>
 
           {/* Button */}
 
           <div className="flex justify-end mt-6">
-
             <button
               type="submit"
               disabled={isPaid}
@@ -463,13 +438,9 @@ const EditSalary = () => {
                 ? "Already Paid"
                 : "Update Salary"}
             </button>
-
           </div>
-
         </form>
-
       </div>
-
     </div>
   );
 };

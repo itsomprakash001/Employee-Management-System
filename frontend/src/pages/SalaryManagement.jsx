@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import API_URL from "../../api";
 
 const SalaryManagement = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const SalaryManagement = () => {
   const fetchSalaries = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5000/api/salary",
+        `${API_URL}/api/salary`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

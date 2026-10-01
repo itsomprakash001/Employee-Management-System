@@ -6,6 +6,7 @@ import {
 } from "@clerk/react";
 
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const Setting = () => {
   const { user } = useUser();
@@ -26,8 +27,6 @@ const Setting = () => {
   const currentEmail =
     user?.primaryEmailAddress?.emailAddress || "";
 
-  
-
   const createEmailAddress = useReverification(
     async (newEmail) => {
       return await user.createEmailAddress({
@@ -35,7 +34,6 @@ const Setting = () => {
       });
     }
   );
-
 
   const sendOtp = async (e) => {
     e.preventDefault();
@@ -70,8 +68,6 @@ const Setting = () => {
     try {
       setLoading(true);
 
-      
-
       const emailAddress =
         await createEmailAddress(newEmail);
 
@@ -82,10 +78,7 @@ const Setting = () => {
         return;
       }
 
-      
       setPendingEmailAddress(emailAddress);
-
-      
 
       await emailAddress.prepareVerification({
         strategy: "email_code",
@@ -111,8 +104,6 @@ const Setting = () => {
     }
   };
 
-  
-
   const verifyOtp = async (e) => {
     e.preventDefault();
 
@@ -134,8 +125,6 @@ const Setting = () => {
     try {
       setLoading(true);
 
-      
-
       const verification =
         await pendingEmailAddress.attemptVerification(
           {
@@ -153,14 +142,10 @@ const Setting = () => {
         return;
       }
 
-      
-
       await user.update({
         primaryEmailAddressId:
           pendingEmailAddress.id,
       });
-
-     
 
       const token = await getToken();
 
@@ -171,15 +156,13 @@ const Setting = () => {
         return;
       }
 
-      
-
       const newEmail =
         pendingEmailAddress.emailAddress
           .trim()
           .toLowerCase();
 
       const response = await axios.put(
-        "http://localhost:5000/api/auth/update-email",
+        `${API_URL}/api/auth/update-email`,
         {
           email: newEmail,
         },
@@ -197,8 +180,6 @@ const Setting = () => {
         );
         return;
       }
-
-      
 
       setMessage(
         "Login email updated successfully."
@@ -224,8 +205,6 @@ const Setting = () => {
     }
   };
 
-  
-
   const cancelOtp = () => {
     setStep("email");
     setEmail("");
@@ -237,12 +216,9 @@ const Setting = () => {
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white shadow-lg rounded-lg p-6">
-
       <h2 className="text-2xl font-bold text-center mb-6 text-teal-600">
         Login Settings
       </h2>
-
-     
 
       {message && (
         <p className="text-green-600 text-center font-medium mb-4">
@@ -250,15 +226,11 @@ const Setting = () => {
         </p>
       )}
 
-      
-
       {error && (
         <p className="text-red-600 text-center font-medium mb-4">
           {error}
         </p>
       )}
-
-      
 
       <div className="mb-6">
         <p className="text-gray-600 text-sm">
@@ -270,11 +242,8 @@ const Setting = () => {
         </p>
       </div>
 
-      
-
       {step === "email" && (
         <form onSubmit={sendOtp}>
-
           <label className="block text-sm font-medium mb-2">
             New Login Email
           </label>
@@ -303,15 +272,11 @@ const Setting = () => {
               ? "Sending OTP..."
               : "Send OTP"}
           </button>
-
         </form>
       )}
 
-      
-
       {step === "otp" && (
         <form onSubmit={verifyOtp}>
-
           <p className="text-sm text-gray-600 mb-2">
             Verification OTP sent to:
           </p>
@@ -359,10 +324,8 @@ const Setting = () => {
           >
             Change Email
           </button>
-
         </form>
       )}
-
     </div>
   );
 };

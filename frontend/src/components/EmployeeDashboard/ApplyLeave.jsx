@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const ApplyLeave = () => {
   const { user, getToken } = useAuth();
@@ -26,8 +27,6 @@ const ApplyLeave = () => {
       [name]: value,
     }));
   };
-
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -78,7 +77,7 @@ const ApplyLeave = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/leave/apply",
+        `${API_URL}/api/leave/apply`,
         leave,
         {
           headers: {
@@ -120,8 +119,6 @@ const ApplyLeave = () => {
     }
   };
 
-  
-
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -158,14 +155,11 @@ const ApplyLeave = () => {
 
   return (
     <div className="p-4 bg-gray-100 min-h-screen">
-
       <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-5">
 
         <h2 className="text-2xl font-bold text-teal-700 mb-5">
           Apply for Leave
         </h2>
-
-       
 
         {successMessage && (
           <div className="mb-4 p-3 rounded-lg bg-green-100 text-green-700 font-semibold text-center">
@@ -177,9 +171,6 @@ const ApplyLeave = () => {
           onSubmit={handleSubmit}
           className="space-y-4"
         >
-
-          
-
           <div>
             <label
               htmlFor="leaveType"
@@ -218,10 +209,7 @@ const ApplyLeave = () => {
             </select>
           </div>
 
-          
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
             <div>
               <label
                 htmlFor="fromDate"
@@ -261,10 +249,7 @@ const ApplyLeave = () => {
                 className="w-full border rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
-
           </div>
-
-          
 
           <div>
             <label
@@ -286,8 +271,6 @@ const ApplyLeave = () => {
             />
           </div>
 
-        
-
           <button
             type="submit"
             disabled={loading}
@@ -299,9 +282,7 @@ const ApplyLeave = () => {
           </button>
 
         </form>
-
       </div>
-
     </div>
   );
 };

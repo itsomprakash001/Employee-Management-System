@@ -10,6 +10,8 @@ import {
   useClerk,
 } from "@clerk/react";
 
+import API_URL from "../api";
+
 export const userContext = createContext();
 
 const AuthContext = ({ children }) => {
@@ -24,7 +26,6 @@ const AuthContext = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  
   useEffect(() => {
     let cancelled = false;
 
@@ -34,7 +35,6 @@ const AuthContext = ({ children }) => {
         return;
       }
 
-      
       const registrationInProgress =
         sessionStorage.getItem(
           "ems_registration_in_progress"
@@ -48,7 +48,6 @@ const AuthContext = ({ children }) => {
         return;
       }
 
-      
       if (!isSignedIn) {
         if (!cancelled) {
           setUser(null);
@@ -73,7 +72,7 @@ const AuthContext = ({ children }) => {
         console.log("CLERK TOKEN FOUND");
 
         const response = await axios.get(
-          "http://localhost:5000/api/auth/verify",
+          `${API_URL}/api/auth/verify`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -121,7 +120,6 @@ const AuthContext = ({ children }) => {
     getToken,
   ]);
 
-  
   const login = (userData) => {
     console.log(
       "EMS USER LOGGED IN:",
@@ -132,7 +130,6 @@ const AuthContext = ({ children }) => {
     setLoading(false);
   };
 
-  
   const logout = async () => {
     try {
       sessionStorage.removeItem(

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useUser } from "@clerk/react";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const Settings = () => {
   const { user } = useUser();
@@ -19,7 +20,6 @@ const Settings = () => {
   const currentEmail =
     user?.primaryEmailAddress?.emailAddress || "";
 
-  
   const sendOtp = async (e) => {
     e.preventDefault();
 
@@ -33,9 +33,7 @@ const Settings = () => {
       return;
     }
 
-    if (
-      newEmail === currentEmail.trim().toLowerCase()
-    ) {
+    if (newEmail === currentEmail.trim().toLowerCase()) {
       setError("Please enter a different email address.");
       return;
     }
@@ -43,10 +41,9 @@ const Settings = () => {
     try {
       setLoading(true);
 
-      const emailAddress =
-        await user.createEmailAddress({
-          email: newEmail,
-        });
+      const emailAddress = await user.createEmailAddress({
+        email: newEmail,
+      });
 
       await emailAddress.prepareVerification({
         strategy: "email_code",
@@ -58,10 +55,7 @@ const Settings = () => {
         "OTP has been sent to your new email address."
       );
     } catch (err) {
-      console.log(
-        "SEND EMAIL OTP ERROR:",
-        err
-      );
+      console.log("SEND EMAIL OTP ERROR:", err);
 
       setError(
         err?.errors?.[0]?.message ||
@@ -72,7 +66,6 @@ const Settings = () => {
     }
   };
 
-  
   const verifyOtp = async (e) => {
     e.preventDefault();
 
@@ -90,23 +83,17 @@ const Settings = () => {
       const newEmail = email.trim().toLowerCase();
 
       // Find the new email inside Clerk
-      const emailAddress =
-        user.emailAddresses.find(
-          (item) =>
-            item.emailAddress.toLowerCase() ===
-            newEmail
-        );
+      const emailAddress = user.emailAddresses.find(
+        (item) =>
+          item.emailAddress.toLowerCase() === newEmail
+      );
 
       if (!emailAddress) {
-        setError(
-          "New email address was not found."
-        );
-
+        setError("New email address was not found.");
         setLoading(false);
         return;
       }
 
-      
       const verification =
         await emailAddress.attemptVerification({
           code: otp.trim(),
@@ -124,13 +111,10 @@ const Settings = () => {
         return;
       }
 
-      
       await user.update({
-        primaryEmailAddressId:
-          emailAddress.id,
+        primaryEmailAddressId: emailAddress.id,
       });
 
-      
       const token = await getToken();
 
       if (!token) {
@@ -142,9 +126,8 @@ const Settings = () => {
         return;
       }
 
-      
       const response = await axios.put(
-        "http://localhost:5000/api/auth/update-email",
+        `${API_URL}/api/auth/update-email`,
         {
           email: newEmail,
         },
@@ -165,9 +148,7 @@ const Settings = () => {
         return;
       }
 
-      // ----------------------------------------------
       // SUCCESS
-      // ----------------------------------------------
       setSuccess(
         "Login email updated successfully."
       );
@@ -176,10 +157,7 @@ const Settings = () => {
       setOtp("");
       setStep("email");
     } catch (err) {
-      console.log(
-        "VERIFY EMAIL OTP ERROR:",
-        err
-      );
+      console.log("VERIFY EMAIL OTP ERROR:", err);
 
       setError(
         err?.response?.data?.error ||
@@ -191,7 +169,6 @@ const Settings = () => {
     }
   };
 
-  
   const cancelOtp = () => {
     setStep("email");
     setEmail("");
@@ -203,7 +180,6 @@ const Settings = () => {
   return (
     <div className="flex justify-center px-4 mt-6">
       <div className="w-full max-w-md bg-white shadow-md rounded-lg p-5">
-
         <h2 className="text-2xl font-bold text-teal-600 mb-4 text-center">
           Login Settings
         </h2>
@@ -319,7 +295,6 @@ const Settings = () => {
             </button>
           </form>
         )}
-
       </div>
     </div>
   );

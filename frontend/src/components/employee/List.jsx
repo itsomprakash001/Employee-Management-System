@@ -4,6 +4,7 @@ import axios from "axios";
 import DataTable from "react-data-table-component";
 import { columns } from "../../utils/EmployeeHelper";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const List = () => {
   const { user, getToken } = useAuth();
@@ -12,8 +13,6 @@ const List = () => {
   const [filteredEmployees, setFilteredEmployees] =
     useState([]);
   const [empLoading, setEmpLoading] = useState(false);
-
-  
 
   useEffect(() => {
     if (getToken && user) {
@@ -33,7 +32,7 @@ const List = () => {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/employee",
+        `${API_URL}/api/employee`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -100,7 +99,6 @@ const List = () => {
     }
   };
 
-
   const handleFilter = (e) => {
     const value =
       e.target.value.toLowerCase();
@@ -120,8 +118,6 @@ const List = () => {
 
     setFilteredEmployees(records);
   };
-
-  
 
   const getRoleLabel = (role) => {
     switch (role) {
@@ -145,8 +141,6 @@ const List = () => {
     }
   };
 
-  
-
   const canAddUser =
     user?.role === "admin" ||
     user?.role === "manager" ||
@@ -155,8 +149,6 @@ const List = () => {
 
   return (
     <div className="p-6 w-full">
-
-      
 
       <div className="text-center mb-6">
         <h2 className="text-4xl font-bold">
@@ -172,8 +164,6 @@ const List = () => {
           </p>
         )}
       </div>
-
-      
 
       <div className="flex justify-between items-center mb-6">
 
@@ -193,8 +183,6 @@ const List = () => {
           </Link>
         )}
       </div>
-
-      
 
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <DataTable

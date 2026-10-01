@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const MySalary = () => {
   const { getToken } = useAuth();
@@ -24,7 +25,7 @@ const MySalary = () => {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/salary/my-salary",
+        `${API_URL}/api/salary/my-salary`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -64,9 +65,6 @@ const MySalary = () => {
 
   return (
     <div className="p-6">
-
-      
-
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-teal-700">
           My Salary History
@@ -77,14 +75,9 @@ const MySalary = () => {
         </p>
       </div>
 
-      
-
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-
         <table className="min-w-full">
-
           <thead className="bg-teal-600 text-white">
-
             <tr>
               <th className="px-6 py-4 text-left">
                 Basic Salary
@@ -110,15 +103,11 @@ const MySalary = () => {
                 Status
               </th>
             </tr>
-
           </thead>
 
           <tbody>
-
             {salaries.length > 0 ? (
-
               salaries.map((salary, index) => (
-
                 <tr
                   key={salary._id}
                   className={`border-b hover:bg-gray-100 transition ${
@@ -127,7 +116,6 @@ const MySalary = () => {
                       : "bg-gray-50"
                   }`}
                 >
-
                   <td className="px-6 py-4">
                     ₹
                     {Number(
@@ -172,7 +160,6 @@ const MySalary = () => {
                   </td>
 
                   <td className="px-6 py-4 text-center">
-
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
                         salary.status === "Paid"
@@ -182,15 +169,10 @@ const MySalary = () => {
                     >
                       {salary.status}
                     </span>
-
                   </td>
-
                 </tr>
-
               ))
-
             ) : (
-
               <tr>
                 <td
                   colSpan="6"
@@ -199,15 +181,10 @@ const MySalary = () => {
                   No salary records found.
                 </td>
               </tr>
-
             )}
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
   );
 };

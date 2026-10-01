@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const AddDepartment = () => {
   const [department, setDepartment] = useState({
@@ -42,7 +43,7 @@ const AddDepartment = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/department/add",
+        `${API_URL}/api/department/add`,
         {
           dep_name: department.dep_name.trim(),
           description: department.description.trim(),
@@ -80,7 +81,6 @@ const AddDepartment = () => {
       </h2>
 
       <form onSubmit={handleSubmit}>
-        
         <div>
           <label
             htmlFor="dep_name"
@@ -101,7 +101,6 @@ const AddDepartment = () => {
           />
         </div>
 
-        
         <div className="mt-3">
           <label
             htmlFor="description"

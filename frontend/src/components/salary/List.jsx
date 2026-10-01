@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/useAuth";
+import API_URL from "../../api";
 
 const roleHierarchy = {
   admin: 5,
@@ -32,8 +33,6 @@ const List = () => {
   const [salaries, setSalaries] = useState([]);
   const [search, setSearch] = useState("");
 
-  
-
   const fetchSalaries = async () => {
     try {
       const token = await getToken();
@@ -44,7 +43,7 @@ const List = () => {
       }
 
       const response = await axios.get(
-        "http://localhost:5000/api/salary",
+        `${API_URL}/api/salary`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -78,8 +77,6 @@ const List = () => {
     }
   }, [getToken]);
 
-  
-
   const canManageSalary = (salary) => {
     if (!user || !salary) {
       return false;
@@ -103,8 +100,6 @@ const List = () => {
     );
   };
 
-  
-
   const filteredSalaries =
     salaries.filter((salary) => {
       const searchText =
@@ -126,8 +121,6 @@ const List = () => {
       );
     });
 
-  
-
   const canAddSalary =
     user &&
     [
@@ -139,9 +132,7 @@ const List = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-4">
-
       <div className="flex justify-between items-center mb-5">
-
         <h2 className="text-2xl font-bold text-gray-800">
           Salary Management
         </h2>
@@ -154,7 +145,6 @@ const List = () => {
             Add Salary
           </Link>
         )}
-
       </div>
 
       <div className="mb-4">
@@ -170,11 +160,8 @@ const List = () => {
       </div>
 
       <div className="bg-white rounded-xl shadow-lg border overflow-x-auto">
-
         <table className="w-full text-sm">
-
           <thead className="bg-teal-600 text-white">
-
             <tr>
               <th className="px-2 py-3">
                 Employee ID
@@ -220,15 +207,11 @@ const List = () => {
                 Action
               </th>
             </tr>
-
           </thead>
 
           <tbody>
-
             {filteredSalaries.length > 0 ? (
-
               filteredSalaries.map((salary) => {
-
                 const canEdit =
                   canManageSalary(
                     salary
@@ -239,7 +222,6 @@ const List = () => {
                     key={salary._id}
                     className="border-b hover:bg-gray-50 text-center transition"
                   >
-
                     <td className="px-2 py-3">
                       {salary.employeeId}
                     </td>
@@ -286,7 +268,6 @@ const List = () => {
                     </td>
 
                     <td className="px-2 py-3">
-
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
                           salary.status ===
@@ -297,13 +278,10 @@ const List = () => {
                       >
                         {salary.status}
                       </span>
-
                     </td>
 
                     <td className="px-2 py-3">
-
                       {canEdit ? (
-
                         <button
                           onClick={() =>
                             navigate(
@@ -314,23 +292,16 @@ const List = () => {
                         >
                           Edit
                         </button>
-
                       ) : (
-
                         <span className="text-gray-400 text-xs">
                           View only
                         </span>
-
                       )}
-
                     </td>
-
                   </tr>
                 );
               })
-
             ) : (
-
               <tr>
                 <td
                   colSpan="11"
@@ -339,13 +310,9 @@ const List = () => {
                   No salary records found.
                 </td>
               </tr>
-
             )}
-
           </tbody>
-
         </table>
-
       </div>
     </div>
   );

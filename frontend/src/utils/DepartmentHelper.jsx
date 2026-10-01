@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
+import API_URL from "../api";
 
 export const DepartmentButtons = ({
   DepId,
@@ -25,10 +26,6 @@ export const DepartmentButtons = ({
         );
         return;
       }
-
-      const API_URL =
-        import.meta.env.VITE_API_URL ||
-        "http://localhost:5000";
 
       const response = await axios.delete(
         `${API_URL}/api/department/${id}`,
