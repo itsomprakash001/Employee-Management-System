@@ -1,61 +1,78 @@
-# 👨‍💼 Employee Management System - Frontend
+# EMS Frontend
 
-This is the frontend of the **Employee Management System**, built with **React.js** and **Vite**.
+Frontend application for the **Employee Management System (EMS)** built with React and Vite.
 
-## ✨ Frontend Highlights
+## 🚀 Features
 
-- ⚛️ Built with React.js & Vite
-- 🎨 Responsive UI using Tailwind CSS
-- 🔐 JWT Authentication Support
-- 👥 Role-Based Dashboard (Admin & Employee)
-- 🔄 React Router DOM for Navigation
-- 📡 Axios for API Integration
-- 📱 Responsive Design
-- ⚡ Fast Development with Vite
+* 🔐 Clerk authentication
+* 👥 Role-based dashboards
+* 🏢 Company and employee management
+* 🏬 Department management
+* 💰 Salary management
+* 📝 Leave management
+* 👤 Employee profiles
+* 📊 Admin and employee dashboards
+* 🔒 Protected routes
 
----
+## 🛠️ Tech Stack
 
-## 🛠️ Prerequisites
+* React
+* Vite
+* React Router
+* Axios
+* Tailwind CSS
+* Clerk
 
-- Node.js
-- npm
+## ⚙️ Setup
 
-## 📥 Installation
+Install dependencies:
 
 ```bash
 npm install
 ```
 
----
+Create `.env`:
 
-## ▶️ Run on Local System
+```env
+VITE_API_URL=https://your-backend.onrender.com
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+```
 
-Start the development server:
+Start development server:
 
 ```bash
 npm run dev
 ```
 
-Open your browser and visit:
-
-```
-http://localhost:5173
-```
-
-> **Note:** Make sure the backend server is running before starting the frontend.
-
----
-
-## 📦 Build for Production
+## 📦 Production Build
 
 ```bash
 npm run build
 ```
 
----
+The production files are generated in:
 
-## 👀 Preview the Production Build
-
-```bash
-npm run preview
+```text
+dist/
 ```
+
+## 🌐 Deployment
+
+The frontend is deployed as a **Render Static Site**.
+
+```text
+Root Directory: frontend
+Build Command: npm install && npm run build
+Publish Directory: dist
+```
+
+## 🔗 Backend
+
+The frontend communicates with the EMS backend using:
+
+```env
+VITE_API_URL
+```
+
+Never commit environment files or sensitive credentials to GitHub.
+
