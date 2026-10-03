@@ -31,6 +31,8 @@ const AddSalary = () => {
   const { user, getToken } = useAuth();
 
   const [employees, setEmployees] = useState([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
   const [formData, setFormData] = useState({
@@ -45,7 +47,13 @@ const AddSalary = () => {
 
   useEffect(() => {
     const fetchEmployees = async () => {
+      if (!user || user.role === "employee") {
+        return;
+      }
+
       try {
+        setLoadingEmployees(true);
+
         const token = await getToken();
 
         if (!token) {
@@ -56,6 +64,10 @@ const AddSalary = () => {
         const response = await axios.get(
           `${API_URL}/api/employee`,
           {
+            params: {
+              page: 1,
+              limit: 100,
+            },
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -63,24 +75,14 @@ const AddSalary = () => {
         );
 
         if (response.data.success) {
-          const accessibleEmployees =
-            (response.data.employees || []).filter(
-              (employee) => {
-                if (!user) {
-                  return false;
-                }
-
-                // Employee cannot add salary
-                if (user.role === "employee") {
-                  return false;
-                }
-
-                return canManageRole(
-                  user.role,
-                  employee.role
-                );
-              }
-            );
+          const accessibleEmployees = (
+            response.data.employees || []
+          ).filter((employee) =>
+            canManageRole(
+              user.role,
+              employee.role
+            )
+          );
 
           setEmployees(accessibleEmployees);
         }
@@ -88,14 +90,15 @@ const AddSalary = () => {
         console.log(
           "FETCH EMPLOYEES ERROR:",
           error.response?.status,
-          error.response?.data ||
-            error.message
+          error.response?.data || error.message
         );
 
         alert(
           error.response?.data?.error ||
             "Failed to fetch employees"
         );
+      } finally {
+        setLoadingEmployees(false);
       }
     };
 
@@ -104,61 +107,51 @@ const AddSalary = () => {
     }
   }, [getToken, user]);
 
-  // ================= HANDLE CHANGE =================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    const updatedForm = {
-      ...formData,
-      [name]: value,
-    };
+    setFormData((prev) => {
+      const updatedForm = {
+        ...prev,
+        [name]: value,
+      };
 
-    const basic =
-      Number(updatedForm.basicSalary) || 0;
+      const basic = Number(updatedForm.basicSalary) || 0;
+      const allowance =
+        Number(updatedForm.allowances) || 0;
+      const deduction =
+        Number(updatedForm.deductions) || 0;
 
-    const allowance =
-      Number(updatedForm.allowances) || 0;
+      updatedForm.netSalary =
+        basic + allowance - deduction;
 
-    const deduction =
-      Number(updatedForm.deductions) || 0;
-
-    updatedForm.netSalary =
-      basic + allowance - deduction;
-
-    setFormData(updatedForm);
+      return updatedForm;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Employee should never reach this page
     if (
       !user ||
-      user.role === "employee"
+      !["admin", "manager", "hr", "tl"].includes(
+        user.role
+      )
     ) {
-      alert(
-        "You are not allowed to add salary."
-      );
+      alert("You are not allowed to add salary.");
       return;
     }
 
-    // Validate selected employee
-    const selectedEmployee =
-      employees.find(
-        (employee) =>
-          employee._id ===
-          formData.employeeId
-      );
+    const selectedEmployee = employees.find(
+      (employee) =>
+        employee._id === formData.employeeId
+    );
 
     if (!selectedEmployee) {
-      alert(
-        "Please select a valid employee."
-      );
+      alert("Please select a valid employee.");
       return;
     }
 
-    // Frontend hierarchy check
     if (
       !canManageRole(
         user.role,
@@ -171,7 +164,69 @@ const AddSalary = () => {
       return;
     }
 
+    const basicSalary = Number(
+      formData.basicSalary
+    );
+
+    const allowances = Number(
+      formData.allowances || 0
+    );
+
+    const deductions = Number(
+      formData.deductions || 0
+    );
+
+    const netSalary =
+      basicSalary + allowances - deductions;
+
+    if (
+      !Number.isFinite(basicSalary) ||
+      basicSalary < 0
+    ) {
+      alert("Please enter a valid basic salary.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(allowances) ||
+      allowances < 0
+    ) {
+      alert("Please enter valid allowances.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(deductions) ||
+      deductions < 0
+    ) {
+      alert("Please enter valid deductions.");
+      return;
+    }
+
+    if (netSalary < 0) {
+      alert(
+        "Deductions cannot be greater than the total salary."
+      );
+      return;
+    }
+
+    if (!formData.payDate) {
+      alert("Pay date is required.");
+      return;
+    }
+
+    if (
+      !["Paid", "Pending"].includes(
+        formData.status
+      )
+    ) {
+      alert("Please select a valid salary status.");
+      return;
+    }
+
     try {
+      setSubmitting(true);
+
       const token = await getToken();
 
       if (!token) {
@@ -183,7 +238,15 @@ const AddSalary = () => {
 
       const response = await axios.post(
         `${API_URL}/api/salary/add`,
-        formData,
+        {
+          employeeId: formData.employeeId,
+          basicSalary,
+          allowances,
+          deductions,
+          netSalary,
+          payDate: formData.payDate,
+          status: formData.status,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -197,34 +260,30 @@ const AddSalary = () => {
         );
 
         setTimeout(() => {
-          navigate(
-            "/admin-dashboard/salary"
-          );
-        }, 2000);
+          navigate("/admin-dashboard/salary");
+        }, 1500);
       }
     } catch (error) {
       console.log(
         "ADD SALARY ERROR:",
         error.response?.status,
-        error.response?.data ||
-          error.message
+        error.response?.data || error.message
       );
 
       alert(
         error.response?.data?.error ||
           "Failed to add salary"
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const canAddSalary =
     user &&
-    [
-      "admin",
-      "manager",
-      "hr",
-      "tl",
-    ].includes(user.role);
+    ["admin", "manager", "hr", "tl"].includes(
+      user.role
+    );
 
   if (!canAddSalary) {
     return (
@@ -246,9 +305,6 @@ const AddSalary = () => {
     <div className="bg-gray-100 p-3 min-h-screen">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-xl shadow-md border overflow-hidden">
-
-          {/* Header */}
-
           <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-5 py-3">
             <h2 className="text-xl font-bold text-white">
               Add Salary
@@ -260,9 +316,6 @@ const AddSalary = () => {
           </div>
 
           <div className="p-4">
-
-            {/* Success Message */}
-
             {successMessage && (
               <div className="mb-4 p-3 rounded-lg bg-green-100 text-green-700 font-semibold text-center">
                 {successMessage}
@@ -271,9 +324,6 @@ const AddSalary = () => {
 
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-                {/* Employee */}
-
                 <div>
                   <label
                     htmlFor="employeeId"
@@ -289,34 +339,34 @@ const AddSalary = () => {
                     onChange={handleChange}
                     autoComplete="off"
                     required
-                    className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                    disabled={loadingEmployees}
+                    className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 disabled:bg-gray-100"
                   >
                     <option value="">
-                      Select Employee
+                      {loadingEmployees
+                        ? "Loading employees..."
+                        : "Select Employee"}
                     </option>
 
-                    {employees.map(
-                      (employee) => (
-                        <option
-                          key={employee._id}
-                          value={employee._id}
-                        >
-                          {employee.employeeId} -{" "}
-                          {employee.name} (
-                          {employee.role})
-                        </option>
-                      )
-                    )}
+                    {employees.map((employee) => (
+                      <option
+                        key={employee._id}
+                        value={employee._id}
+                      >
+                        {employee.employeeId} -{" "}
+                        {employee.name} (
+                        {employee.role})
+                      </option>
+                    ))}
                   </select>
 
-                  {employees.length === 0 && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      No employees available for your role.
-                    </p>
-                  )}
+                  {!loadingEmployees &&
+                    employees.length === 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        No employees available for your role.
+                      </p>
+                    )}
                 </div>
-
-                {/* Basic Salary */}
 
                 <div>
                   <label
@@ -333,12 +383,11 @@ const AddSalary = () => {
                     value={formData.basicSalary}
                     onChange={handleChange}
                     min="0"
+                    step="0.01"
                     required
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
-
-                {/* Allowances */}
 
                 <div>
                   <label
@@ -355,11 +404,10 @@ const AddSalary = () => {
                     value={formData.allowances}
                     onChange={handleChange}
                     min="0"
+                    step="0.01"
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
-
-                {/* Deductions */}
 
                 <div>
                   <label
@@ -376,11 +424,10 @@ const AddSalary = () => {
                     value={formData.deductions}
                     onChange={handleChange}
                     min="0"
+                    step="0.01"
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
-
-                {/* Net Salary */}
 
                 <div>
                   <label
@@ -400,8 +447,6 @@ const AddSalary = () => {
                   />
                 </div>
 
-                {/* Pay Date */}
-
                 <div>
                   <label
                     htmlFor="payDate"
@@ -420,8 +465,6 @@ const AddSalary = () => {
                     className="w-full border rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
-
-                {/* Status */}
 
                 <div className="md:col-span-2">
                   <label
@@ -454,15 +497,20 @@ const AddSalary = () => {
                 </div>
               </div>
 
-              {/* Button */}
-
               <div className="flex justify-end mt-4">
                 <button
                   id="add-salary"
                   type="submit"
-                  className="bg-teal-600 hover:bg-teal-700 hover:scale-105 hover:-translate-y-1 hover:shadow-xl active:scale-95 transition-all duration-300 cursor-pointer text-white font-semibold text-sm px-7 py-2 rounded-lg"
+                  disabled={
+                    submitting ||
+                    loadingEmployees ||
+                    employees.length === 0
+                  }
+                  className="bg-teal-600 hover:bg-teal-700 hover:scale-105 hover:-translate-y-1 hover:shadow-xl active:scale-95 transition-all duration-300 cursor-pointer text-white font-semibold text-sm px-7 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0"
                 >
-                  Add Salary
+                  {submitting
+                    ? "Adding..."
+                    : "Add Salary"}
                 </button>
               </div>
             </form>

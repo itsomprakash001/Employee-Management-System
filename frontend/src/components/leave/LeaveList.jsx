@@ -116,16 +116,15 @@ const LeaveList = () => {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "Approved":
-        return "bg-green-100 text-green-700";
-
-      case "Rejected":
-        return "bg-red-100 text-red-700";
-
-      default:
-        return "bg-yellow-100 text-yellow-700";
+    if (status === "Approved") {
+      return "bg-green-100 text-green-700";
     }
+
+    if (status === "Rejected") {
+      return "bg-red-100 text-red-700";
+    }
+
+    return "bg-yellow-100 text-yellow-700";
   };
 
   const canManageLeave = (leave) => {
@@ -137,22 +136,18 @@ const LeaveList = () => {
       return false;
     }
 
-    const targetRole = leave.employeeRole;
-
-    if (!targetRole) {
+    if (!leave.employeeRole) {
       return false;
     }
 
     return canManageRole(
       user.role,
-      targetRole
+      leave.employeeRole
     );
   };
 
   const filteredLeaves = leaves.filter((leave) => {
-    const searchText = search
-      .toLowerCase()
-      .trim();
+    const searchText = search.toLowerCase().trim();
 
     if (!searchText) {
       return true;
@@ -160,6 +155,9 @@ const LeaveList = () => {
 
     return (
       leave.employeeName
+        ?.toLowerCase()
+        .includes(searchText) ||
+      leave.employeeCode
         ?.toLowerCase()
         .includes(searchText) ||
       leave.employeeRole
@@ -179,8 +177,8 @@ const LeaveList = () => {
 
   if (loading) {
     return (
-      <div className="h-[calc(100vh-64px)] bg-gray-100 flex items-center justify-center">
-        <div className="text-gray-600 font-semibold">
+      <div className="h-[calc(100vh-64px)] flex items-center justify-center bg-gray-50">
+        <div className="text-gray-600 font-medium">
           Loading leave requests...
         </div>
       </div>
@@ -188,79 +186,54 @@ const LeaveList = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] overflow-hidden bg-gray-100 p-3">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-bold text-teal-700">
-          Leave Management
-        </h2>
+    <div className="min-h-full bg-gray-50 p-5">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-black">
+            Leave Management
+          </h1>
+
+          <p className="text-sm text-gray-500 mt-1">
+            Review and manage employee leave requests
+          </p>
+        </div>
 
         <input
           type="text"
           placeholder="Search employee, role, department..."
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => setSearch(e.target.value)}
           className="
+            w-72
+            px-4
+            py-2.5
             border
             border-gray-300
             rounded-lg
-            px-3
-            py-1.5
-            w-64
-            text-xs
+            text-sm
             bg-white
-            focus:outline-none
+            outline-none
             focus:ring-2
             focus:ring-teal-500
           "
         />
       </div>
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-center text-[11px]">
+          <table className="w-full min-w-[950px] text-center text-sm">
             <thead className="bg-teal-600 text-white">
               <tr>
-                <th className="px-2 py-1.5">
-                  S.No
-                </th>
-
-                <th className="px-2 py-1.5">
-                  Employee
-                </th>
-
-                <th className="px-2 py-1.5">
-                  Role
-                </th>
-
-                <th className="px-2 py-1.5">
-                  Department
-                </th>
-
-                <th className="px-2 py-1.5">
-                  Leave Type
-                </th>
-
-                <th className="px-2 py-1.5">
-                  From
-                </th>
-
-                <th className="px-2 py-1.5">
-                  To
-                </th>
-
-                <th className="px-2 py-1.5">
-                  Days
-                </th>
-
-                <th className="px-2 py-1.5">
-                  Status
-                </th>
-
-                <th className="px-2 py-1.5">
-                  Action
-                </th>
+                <th className="px-3 py-3">S.No</th>
+                <th className="px-3 py-3">Employee</th>
+                <th className="px-3 py-3">Role</th>
+                <th className="px-3 py-3">Department</th>
+                <th className="px-3 py-3">Leave Type</th>
+                <th className="px-3 py-3">From</th>
+                <th className="px-3 py-3">To</th>
+                <th className="px-3 py-3">Days</th>
+                <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3">Action</th>
               </tr>
             </thead>
 
@@ -274,33 +247,29 @@ const LeaveList = () => {
                   return (
                     <tr
                       key={leave._id}
-                      className="
-                        border-b
-                        hover:bg-gray-50
-                        transition
-                      "
+                      className="border-b hover:bg-gray-50 transition"
                     >
-                      <td className="px-2 py-1.5">
+                      <td className="px-3 py-2.5">
                         {index + 1}
                       </td>
 
-                      <td className="px-2 py-1.5 font-medium">
+                      <td className="px-3 py-2.5 font-medium">
                         {leave.employeeName || "N/A"}
                       </td>
 
-                      <td className="px-2 py-1.5 capitalize">
+                      <td className="px-3 py-2.5 capitalize">
                         {leave.employeeRole || "N/A"}
                       </td>
 
-                      <td className="px-2 py-1.5">
+                      <td className="px-3 py-2.5">
                         {leave.department || "N/A"}
                       </td>
 
-                      <td className="px-2 py-1.5">
-                        {leave.leaveType}
+                      <td className="px-3 py-2.5">
+                        {leave.leaveType || "N/A"}
                       </td>
 
-                      <td className="px-2 py-1.5">
+                      <td className="px-3 py-2.5">
                         {leave.fromDate
                           ? new Date(
                               leave.fromDate
@@ -308,7 +277,7 @@ const LeaveList = () => {
                           : "N/A"}
                       </td>
 
-                      <td className="px-2 py-1.5">
+                      <td className="px-3 py-2.5">
                         {leave.toDate
                           ? new Date(
                               leave.toDate
@@ -316,17 +285,18 @@ const LeaveList = () => {
                           : "N/A"}
                       </td>
 
-                      <td className="px-2 py-1.5">
-                        {leave.totalDays}
+                      <td className="px-3 py-2.5 font-medium">
+                        {leave.totalDays || 0}
                       </td>
 
-                      <td className="px-2 py-1.5">
+                      <td className="px-3 py-2.5">
                         <span
                           className={`
-                            px-2
-                            py-0.5
+                            inline-block
+                            px-2.5
+                            py-1
                             rounded-full
-                            text-[10px]
+                            text-xs
                             font-semibold
                             ${getStatusColor(
                               leave.status
@@ -337,9 +307,9 @@ const LeaveList = () => {
                         </span>
                       </td>
 
-                      <td className="px-2 py-1.5">
+                      <td className="px-3 py-2.5">
                         {canApproveReject ? (
-                          <div className="flex justify-center gap-1">
+                          <div className="flex justify-center gap-2">
                             <button
                               type="button"
                               onClick={() =>
@@ -349,14 +319,16 @@ const LeaveList = () => {
                                 )
                               }
                               className="
-                                px-2.5
-                                py-0.5
-                                rounded
+                                px-3
+                                py-1
+                                rounded-md
                                 bg-green-600
                                 hover:bg-green-700
                                 text-white
-                                text-[10px]
+                                text-xs
+                                font-medium
                                 cursor-pointer
+                                transition
                               "
                             >
                               Approve
@@ -371,29 +343,31 @@ const LeaveList = () => {
                                 )
                               }
                               className="
-                                px-2.5
-                                py-0.5
-                                rounded
+                                px-3
+                                py-1
+                                rounded-md
                                 bg-red-600
                                 hover:bg-red-700
                                 text-white
-                                text-[10px]
+                                text-xs
+                                font-medium
                                 cursor-pointer
+                                transition
                               "
                             >
                               Reject
                             </button>
                           </div>
                         ) : leave.status === "Pending" ? (
-                          <span className="text-gray-500 text-[10px]">
+                          <span className="text-gray-400 text-xs">
                             Awaiting approval
                           </span>
                         ) : leave.status === "Approved" ? (
-                          <span className="text-green-600 font-semibold text-[10px]">
+                          <span className="text-green-600 font-semibold text-xs">
                             Approved
                           </span>
                         ) : (
-                          <span className="text-red-600 font-semibold text-[10px]">
+                          <span className="text-red-600 font-semibold text-xs">
                             Rejected
                           </span>
                         )}
@@ -405,7 +379,7 @@ const LeaveList = () => {
                 <tr>
                   <td
                     colSpan="10"
-                    className="py-6 text-gray-500"
+                    className="py-12 text-gray-500"
                   >
                     No matching leave requests found
                   </td>

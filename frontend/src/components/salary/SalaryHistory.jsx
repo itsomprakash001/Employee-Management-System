@@ -18,6 +18,7 @@ const SalaryHistory = () => {
     const fetchSalaryHistory = async () => {
       try {
         setLoading(true);
+        setAccessDenied(false);
 
         const token = await getToken();
 
@@ -51,8 +52,7 @@ const SalaryHistory = () => {
         console.log(
           "FETCH SALARY HISTORY ERROR:",
           error.response?.status,
-          error.response?.data ||
-            error.message
+          error.response?.data || error.message
         );
 
         if (
@@ -115,9 +115,6 @@ const SalaryHistory = () => {
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
       <div className="max-w-6xl mx-auto">
-
-        {/* Header */}
-
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-gray-800">
             Salary History
@@ -133,8 +130,6 @@ const SalaryHistory = () => {
             Back
           </button>
         </div>
-
-        {/* Employee Details */}
 
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <h3 className="text-xl font-semibold mb-4 text-teal-600">
@@ -193,8 +188,6 @@ const SalaryHistory = () => {
             </div>
           </div>
         </div>
-
-        {/* Salary Table */}
 
         <div className="bg-white rounded-xl shadow-md overflow-x-auto">
           <table className="w-full min-w-[900px]">
@@ -259,7 +252,7 @@ const SalaryHistory = () => {
                       </td>
 
                       <td className="text-center">
-                        {salary.payDate}
+                        {salary.payDate || "N/A"}
                       </td>
 
                       <td className="text-center">

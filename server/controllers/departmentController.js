@@ -5,8 +5,6 @@ import Salary from "../models/Salary.js";
 import Leave from "../models/Leave.js";
 import { clerkClient } from "@clerk/express";
 
-
-
 const getDepartments = async (req, res) => {
   try {
     const departments = await Department.find({
@@ -29,16 +27,12 @@ const getDepartments = async (req, res) => {
   }
 };
 
-
-
 const addDepartment = async (req, res) => {
   try {
-    // Admin / Manager can add departments
     if (!["admin", "manager"].includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        error:
-          "Only the company head or manager can manage departments",
+        error: "Only the company head or manager can manage departments",
       });
     }
 
@@ -53,7 +47,6 @@ const addDepartment = async (req, res) => {
 
     const departmentName = dep_name.trim();
 
-    // Check only inside current company
     const existingDepartment = await Department.findOne({
       companyId: req.user.companyId,
       dep_name: departmentName,
@@ -88,8 +81,6 @@ const addDepartment = async (req, res) => {
   }
 };
 
-
-
 const getDepartment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -120,21 +111,16 @@ const getDepartment = async (req, res) => {
   }
 };
 
-
-
 const updateDepartment = async (req, res) => {
   try {
-    // Admin / Manager can update departments
     if (!["admin", "manager"].includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        error:
-          "Only the company head or manager can manage departments",
+        error: "Only the company head or manager can manage departments",
       });
     }
 
     const { id } = req.params;
-
     const { dep_name, description } = req.body;
 
     if (!dep_name?.trim()) {
@@ -146,8 +132,6 @@ const updateDepartment = async (req, res) => {
 
     const departmentName = dep_name.trim();
 
-    // Check duplicate department name
-    // inside the same company
     const duplicateDepartment = await Department.findOne({
       companyId: req.user.companyId,
       dep_name: departmentName,
@@ -199,22 +183,16 @@ const updateDepartment = async (req, res) => {
   }
 };
 
-
-
 const deleteDepartment = async (req, res) => {
   try {
-    // Admin / Manager can delete departments
     if (!["admin", "manager"].includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        error:
-          "Only the company head or manager can manage departments",
+        error: "Only the company head or manager can manage departments",
       });
     }
 
     const { id } = req.params;
-
-    
 
     const department = await Department.findOne({
       _id: id,
@@ -228,38 +206,26 @@ const deleteDepartment = async (req, res) => {
       });
     }
 
-    
-
     const employees = await Employee.find({
       department: id,
       companyId: req.user.companyId,
     });
 
-    
-
     for (const employee of employees) {
-     
-
       await Salary.deleteMany({
         employeeId: employee._id,
         companyId: req.user.companyId,
       });
-
-      
 
       await Leave.deleteMany({
         employeeId: employee._id,
         companyId: req.user.companyId,
       });
 
-      
-
       const employeeUser = await User.findOne({
         _id: employee.userId,
         companyId: req.user.companyId,
       });
-
-      
 
       if (
         employeeUser?.clerkUserId &&
@@ -282,14 +248,10 @@ const deleteDepartment = async (req, res) => {
         }
       }
 
-      
-
       await User.findOneAndDelete({
         _id: employee.userId,
         companyId: req.user.companyId,
       });
-
-      
 
       await Employee.deleteOne({
         _id: employee._id,
@@ -297,19 +259,14 @@ const deleteDepartment = async (req, res) => {
       });
     }
 
-   
-
     await Department.deleteOne({
       _id: id,
       companyId: req.user.companyId,
     });
 
-    
-
     return res.status(200).json({
       success: true,
-      message:
-        "Department and all related records deleted successfully",
+      message: "Department and all related records deleted successfully",
     });
   } catch (error) {
     console.log("DELETE DEPARTMENT ERROR:", error);
@@ -320,8 +277,6 @@ const deleteDepartment = async (req, res) => {
     });
   }
 };
-
-
 
 export {
   addDepartment,

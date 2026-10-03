@@ -15,6 +15,7 @@ const EditDepartment = () => {
   });
 
   const [depLoading, setDepLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const fetchDepartment = async () => {
@@ -65,8 +66,6 @@ const EditDepartment = () => {
     }
   }, [id, getToken]);
 
-  // ================= HANDLE CHANGE =================
-
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -79,7 +78,14 @@ const EditDepartment = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!department.dep_name.trim()) {
+      alert("Department name is required.");
+      return;
+    }
+
     try {
+      setSaving(true);
+
       const token = await getToken();
 
       if (!token) {
@@ -91,7 +97,10 @@ const EditDepartment = () => {
 
       const response = await axios.put(
         `${API_URL}/api/department/${id}`,
-        department,
+        {
+          dep_name: department.dep_name.trim(),
+          description: department.description.trim(),
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -113,6 +122,8 @@ const EditDepartment = () => {
         error.response?.data?.error ||
           "Unable to update department"
       );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -126,13 +137,11 @@ const EditDepartment = () => {
 
   return (
     <div className="max-w-3xl mx-auto mt-10 bg-white p-8 rounded-md shadow-md w-96">
-
       <h2 className="text-2xl font-bold mb-6">
         Edit Department
       </h2>
 
       <form onSubmit={handleSubmit}>
-
         <div>
           <label
             htmlFor="dep_name"
@@ -177,11 +186,11 @@ const EditDepartment = () => {
         <button
           id="update-department"
           type="submit"
-          className="w-full mt-6 bg-teal-600 hover:bg-teal-700 hover:scale-105 hover:shadow-lg transition-all duration-300 text-white font-bold py-2 px-4 rounded cursor-pointer"
+          disabled={saving}
+          className="w-full mt-6 bg-teal-600 hover:bg-teal-700 hover:scale-105 hover:shadow-lg transition-all duration-300 text-white font-bold py-2 px-4 rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          Update Department
+          {saving ? "Updating..." : "Update Department"}
         </button>
-
       </form>
     </div>
   );

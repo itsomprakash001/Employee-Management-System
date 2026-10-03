@@ -32,11 +32,10 @@ const EditSalary = () => {
   const { user, getToken } = useAuth();
 
   const [isPaid, setIsPaid] = useState(false);
-  const [successMessage, setSuccessMessage] =
-    useState("");
-  const [accessDenied, setAccessDenied] =
-    useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     basicSalary: "",
@@ -70,59 +69,65 @@ const EditSalary = () => {
           }
         );
 
-        if (response.data.success) {
-          const salary = response.data.salary;
-
-          // Employee role returned by backend
-          const targetRole =
-            salary.employeeRole ||
-            salary.employeeId?.userId?.role ||
-            salary.role ||
-            "";
-
-          // Frontend hierarchy check
-          if (
-            !user ||
-            user.role === "employee" ||
-            !canManageRole(
-              user.role,
-              targetRole
-            )
-          ) {
-            setAccessDenied(true);
-            return;
-          }
-
-          if (salary.status === "Paid") {
-            setIsPaid(true);
-          }
-
-          setFormData({
-            basicSalary:
-              salary.basicSalary ?? "",
-            allowances:
-              salary.allowances ?? "",
-            deductions:
-              salary.deductions ?? "",
-            netSalary:
-              salary.netSalary ?? "",
-            payDate: salary.payDate
-              ? new Date(
-                  salary.payDate
-                )
-                  .toISOString()
-                  .split("T")[0]
-              : "",
-            status:
-              salary.status || "Pending",
-          });
+        if (!response.data.success) {
+          setAccessDenied(true);
+          return;
         }
+
+        const salary = response.data.salary;
+
+        const targetUser =
+          salary.employeeId?.userId;
+
+        const targetRole =
+          salary.employeeRole ||
+          targetUser?.role ||
+          salary.role ||
+          "";
+
+        const targetUserId =
+          targetUser?._id ||
+          salary.employeeId?.userId?._id;
+
+        const isSelf =
+          targetUserId &&
+          user?._id &&
+          targetUserId.toString() ===
+            user._id.toString();
+
+        if (
+          !user ||
+          isSelf ||
+          !canManageRole(
+            user.role,
+            targetRole
+          )
+        ) {
+          setAccessDenied(true);
+          return;
+        }
+
+        const paid = salary.status === "Paid";
+
+        setIsPaid(paid);
+
+        setFormData({
+          basicSalary: salary.basicSalary ?? "",
+          allowances: salary.allowances ?? "",
+          deductions: salary.deductions ?? "",
+          netSalary: salary.netSalary ?? "",
+          payDate: salary.payDate
+            ? new Date(salary.payDate)
+                .toISOString()
+                .split("T")[0]
+            : "",
+          status: salary.status || "Pending",
+        });
       } catch (error) {
         console.log(
           "FETCH SALARY ERROR:",
           error.response?.status,
-          error.response?.data ||
-            error.message
+          error.response?.data || error.message
         );
 
         if (
@@ -147,28 +152,32 @@ const EditSalary = () => {
   }, [id, user, getToken]);
 
   const handleChange = (e) => {
-    if (isPaid) return;
+    if (isPaid) {
+      return;
+    }
 
     const { name, value } = e.target;
 
-    const updated = {
-      ...formData,
-      [name]: value,
-    };
+    setFormData((prev) => {
+      const updated = {
+        ...prev,
+        [name]: value,
+      };
 
-    const basic =
-      Number(updated.basicSalary) || 0;
+      const basic =
+        Number(updated.basicSalary) || 0;
 
-    const allowance =
-      Number(updated.allowances) || 0;
+      const allowance =
+        Number(updated.allowances) || 0;
 
-    const deduction =
-      Number(updated.deductions) || 0;
+      const deduction =
+        Number(updated.deductions) || 0;
 
-    updated.netSalary =
-      basic + allowance - deduction;
+      updated.netSalary =
+        basic + allowance - deduction;
 
-    setFormData(updated);
+      return updated;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -188,7 +197,69 @@ const EditSalary = () => {
       return;
     }
 
+    const basicSalary = Number(
+      formData.basicSalary
+    );
+
+    const allowances = Number(
+      formData.allowances || 0
+    );
+
+    const deductions = Number(
+      formData.deductions || 0
+    );
+
+    const netSalary =
+      basicSalary + allowances - deductions;
+
+    if (
+      !Number.isFinite(basicSalary) ||
+      basicSalary < 0
+    ) {
+      alert("Please enter a valid basic salary.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(allowances) ||
+      allowances < 0
+    ) {
+      alert("Please enter valid allowances.");
+      return;
+    }
+
+    if (
+      !Number.isFinite(deductions) ||
+      deductions < 0
+    ) {
+      alert("Please enter valid deductions.");
+      return;
+    }
+
+    if (netSalary < 0) {
+      alert(
+        "Deductions cannot be greater than the total salary."
+      );
+      return;
+    }
+
+    if (!formData.payDate) {
+      alert("Pay date is required.");
+      return;
+    }
+
+    if (
+      !["Paid", "Pending"].includes(
+        formData.status
+      )
+    ) {
+      alert("Please select a valid salary status.");
+      return;
+    }
+
     try {
+      setSubmitting(true);
+
       const token = await getToken();
 
       if (!token) {
@@ -200,7 +271,14 @@ const EditSalary = () => {
 
       const response = await axios.put(
         `${API_URL}/api/salary/${id}`,
-        formData,
+        {
+          basicSalary,
+          allowances,
+          deductions,
+          netSalary,
+          payDate: formData.payDate,
+          status: formData.status,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -214,23 +292,30 @@ const EditSalary = () => {
         );
 
         setTimeout(() => {
-          navigate(
-            "/admin-dashboard/salary"
-          );
-        }, 2000);
+          navigate("/admin-dashboard/salary");
+        }, 1500);
       }
     } catch (error) {
       console.log(
         "UPDATE SALARY ERROR:",
         error.response?.status,
-        error.response?.data ||
-          error.message
+        error.response?.data || error.message
       );
+
+      if (
+        error.response?.status === 403 ||
+        error.response?.status === 404
+      ) {
+        setAccessDenied(true);
+        return;
+      }
 
       alert(
         error.response?.data?.error ||
           "Failed to update salary"
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -243,8 +328,6 @@ const EditSalary = () => {
       </div>
     );
   }
-
-  // ================= ACCESS DENIED =================
 
   if (accessDenied) {
     return (
@@ -277,9 +360,6 @@ const EditSalary = () => {
   return (
     <div className="bg-gray-100 min-h-screen p-4">
       <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-
-        {/* Header */}
-
         <div className="bg-teal-600 p-4">
           <h2 className="text-white text-xl font-bold">
             Edit Salary
@@ -290,16 +370,11 @@ const EditSalary = () => {
           onSubmit={handleSubmit}
           className="p-5"
         >
-
-          {/* Success Message */}
-
           {successMessage && (
             <div className="bg-green-100 text-green-700 p-3 rounded-md mb-4 text-center font-semibold">
               {successMessage}
             </div>
           )}
-
-          {/* Paid Message */}
 
           {isPaid && (
             <div className="bg-red-100 text-red-700 p-3 rounded-md mb-4">
@@ -308,85 +383,98 @@ const EditSalary = () => {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* Basic Salary */}
-
             <div>
-              <label className="block mb-1 font-medium">
+              <label
+                htmlFor="basicSalary"
+                className="block mb-1 font-medium"
+              >
                 Basic Salary
               </label>
 
               <input
+                id="basicSalary"
                 type="number"
                 name="basicSalary"
                 value={formData.basicSalary}
                 onChange={handleChange}
                 disabled={isPaid}
                 min="0"
+                step="0.01"
                 required
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               />
             </div>
 
-            {/* Allowances */}
-
             <div>
-              <label className="block mb-1 font-medium">
+              <label
+                htmlFor="allowances"
+                className="block mb-1 font-medium"
+              >
                 Allowances
               </label>
 
               <input
+                id="allowances"
                 type="number"
                 name="allowances"
                 value={formData.allowances}
                 onChange={handleChange}
                 disabled={isPaid}
                 min="0"
+                step="0.01"
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               />
             </div>
 
-            {/* Deductions */}
-
             <div>
-              <label className="block mb-1 font-medium">
+              <label
+                htmlFor="deductions"
+                className="block mb-1 font-medium"
+              >
                 Deductions
               </label>
 
               <input
+                id="deductions"
                 type="number"
                 name="deductions"
                 value={formData.deductions}
                 onChange={handleChange}
                 disabled={isPaid}
                 min="0"
+                step="0.01"
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               />
             </div>
 
-            {/* Net Salary */}
-
             <div>
-              <label className="block mb-1 font-medium">
+              <label
+                htmlFor="netSalary"
+                className="block mb-1 font-medium"
+              >
                 Net Salary
               </label>
 
               <input
+                id="netSalary"
                 type="number"
+                name="netSalary"
                 value={formData.netSalary}
                 readOnly
                 className="w-full border rounded-md p-2 bg-gray-100"
               />
             </div>
 
-            {/* Pay Date */}
-
             <div>
-              <label className="block mb-1 font-medium">
+              <label
+                htmlFor="payDate"
+                className="block mb-1 font-medium"
+              >
                 Pay Date
               </label>
 
               <input
+                id="payDate"
                 type="date"
                 name="payDate"
                 value={formData.payDate}
@@ -397,18 +485,21 @@ const EditSalary = () => {
               />
             </div>
 
-            {/* Status */}
-
             <div>
-              <label className="block mb-1 font-medium">
+              <label
+                htmlFor="status"
+                className="block mb-1 font-medium"
+              >
                 Status
               </label>
 
               <select
+                id="status"
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
                 disabled={isPaid}
+                required
                 className="w-full border rounded-md p-2 disabled:bg-gray-200"
               >
                 <option value="Pending">
@@ -422,20 +513,20 @@ const EditSalary = () => {
             </div>
           </div>
 
-          {/* Button */}
-
           <div className="flex justify-end mt-6">
             <button
               type="submit"
-              disabled={isPaid}
+              disabled={isPaid || submitting}
               className={`px-6 py-2 rounded-lg text-white transition ${
-                isPaid
+                isPaid || submitting
                   ? "bg-gray-400 cursor-not-allowed"
                   : "bg-teal-600 hover:bg-teal-700 cursor-pointer"
               }`}
             >
               {isPaid
                 ? "Already Paid"
+                : submitting
+                ? "Updating..."
                 : "Update Salary"}
             </button>
           </div>

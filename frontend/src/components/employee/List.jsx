@@ -1,38 +1,41 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import DataTable from "react-data-table-component";
+import axios from "axios";
 import { columns } from "../../utils/EmployeeHelper";
 import { useAuth } from "../../context/useAuth";
 import API_URL from "../../api";
+
+const roleHierarchy = {
+  admin: 5,
+  manager: 4,
+  hr: 3,
+  tl: 2,
+  employee: 1,
+};
 
 const List = () => {
   const { user, getToken } = useAuth();
 
   const [employees, setEmployees] = useState([]);
-  const [filteredEmployees, setFilteredEmployees] =
-    useState([]);
   const [empLoading, setEmpLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [totalRows, setTotalRows] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  useEffect(() => {
-    if (getToken && user) {
-      fetchEmployees();
-    }
-  }, [getToken, user]);
-
-  const fetchEmployees = async () => {
-    setEmpLoading(true);
-
+  const fetchDepartments = async () => {
     try {
       const token = await getToken();
 
-      if (!token) {
-        console.log("CLERK TOKEN NOT FOUND");
-        return;
-      }
+      if (!token) return;
 
       const response = await axios.get(
-        `${API_URL}/api/employee`,
+        `${API_URL}/api/department`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -41,162 +44,324 @@ const List = () => {
       );
 
       if (response.data.success) {
-        const data =
-          response.data.employees.map(
-            (emp, index) => ({
-              _id: emp._id,
+        setDepartments(response.data.departments || []);
+      }
+    } catch (error) {
+      console.log(
+        "FETCH DEPARTMENTS ERROR:",
+        error.response?.status,
+        error.response?.data || error.message
+      );
+    }
+  };
 
-              sno: index + 1,
+  const fetchEmployees = async () => {
+    try {
+      setEmpLoading(true);
 
-              employeeId: emp.employeeId,
+      const token = await getToken();
 
-              name: emp.name,
+      if (!token) {
+        console.log("CLERK TOKEN NOT FOUND");
+        return;
+      }
 
-              email: emp.email,
+      const params = {
+        page,
+        limit,
+      };
 
-              role: emp.role,
+      if (search.trim()) {
+        params.search = search.trim();
+      }
 
-              dep_name: emp.dep_name,
+      if (roleFilter) {
+        params.role = roleFilter;
+      }
 
-              designation: emp.designation,
+      if (departmentFilter) {
+        params.department = departmentFilter;
+      }
 
-              dob: emp.dob
-                ? new Date(
-                    emp.dob
-                  ).toLocaleDateString(
-                    "en-GB"
-                  )
-                : "",
+      const response = await axios.get(
+        `${API_URL}/api/employee`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params,
+        }
+      );
 
-              salary: emp.salary,
+      if (response.data.success) {
+        const employeeData = response.data.employees || [];
 
-              profileImage:
-                emp.profileImage,
-            })
-          );
+        const data = employeeData.map((emp, index) => ({
+          _id: emp._id,
+          userId: emp.userId,
+          sno: (page - 1) * limit + index + 1,
+          employeeId: emp.employeeId,
+          name: emp.name,
+          email: emp.email,
+          role: emp.role,
+          dep_name: emp.dep_name,
+          designation: emp.designation,
+          dob: emp.dob
+            ? new Date(emp.dob).toLocaleDateString("en-IN")
+            : "N/A",
+          salary: emp.salary,
+          profileImage: emp.profileImage,
+        }));
 
         setEmployees(data);
-        setFilteredEmployees(data);
+        setTotalRows(response.data.pagination?.total || 0);
+        setTotalPages(
+          response.data.pagination?.totalPages || 0
+        );
       }
     } catch (error) {
       console.log(
         "FETCH EMPLOYEES ERROR:",
         error.response?.status,
-        error.response?.data ||
-          error.message
+        error.response?.data || error.message
       );
 
-      if (error.response) {
-        alert(
-          error.response.data.error ||
-            "Unable to fetch employees"
-        );
-      } else {
-        alert("Something went wrong");
-      }
+      alert(
+        error.response?.data?.error ||
+          "Something went wrong while fetching employees"
+      );
     } finally {
       setEmpLoading(false);
     }
   };
 
-  const handleFilter = (e) => {
-    const value =
-      e.target.value.toLowerCase();
-
-    const records = employees.filter(
-      (emp) =>
-        emp.name
-          ?.toLowerCase()
-          .includes(value) ||
-        emp.employeeId
-          ?.toLowerCase()
-          .includes(value) ||
-        emp.email
-          ?.toLowerCase()
-          .includes(value)
-    );
-
-    setFilteredEmployees(records);
-  };
-
-  const getRoleLabel = (role) => {
-    switch (role) {
-      case "admin":
-        return "CEO";
-
-      case "manager":
-        return "Manager";
-
-      case "hr":
-        return "HR";
-
-      case "tl":
-        return "Team Leader";
-
-      case "employee":
-        return "Employee";
-
-      default:
-        return role || "";
+  useEffect(() => {
+    if (getToken) {
+      fetchDepartments();
     }
+  }, [getToken]);
+
+  useEffect(() => {
+    if (getToken) {
+      fetchEmployees();
+    }
+  }, [
+    getToken,
+    page,
+    limit,
+    search,
+    roleFilter,
+    departmentFilter,
+  ]);
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    setPage(1);
   };
 
-  const canAddUser =
-    user?.role === "admin" ||
-    user?.role === "manager" ||
-    user?.role === "hr" ||
-    user?.role === "tl";
+  const handleRoleChange = (e) => {
+    setRoleFilter(e.target.value);
+    setPage(1);
+  };
+
+  const handleDepartmentChange = (e) => {
+    setDepartmentFilter(e.target.value);
+    setPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  const handlePerRowsChange = (newLimit, newPage) => {
+    setLimit(newLimit);
+    setPage(newPage);
+  };
+
+  const availableRoles = Object.keys(roleHierarchy).filter(
+    (role) => {
+      if (!user?.role) return false;
+
+      const actorLevel = roleHierarchy[user.role];
+      const targetLevel = roleHierarchy[role];
+
+      return (
+        targetLevel !== undefined &&
+        actorLevel !== undefined &&
+        actorLevel >= targetLevel
+      );
+    }
+  );
+
+  const canAddEmployee =
+    user &&
+    ["admin", "manager", "hr", "tl"].includes(user.role);
 
   return (
-    <div className="p-6 w-full">
-
+    <div className="min-h-full bg-gray-50 p-5">
       <div className="text-center mb-6">
-        <h2 className="text-4xl font-bold">
-          Manage Employee
-        </h2>
+        <h1 className="text-4xl font-bold text-black">
+          Employee Management
+        </h1>
 
-        {user?.role && (
-          <p className="mt-2 text-gray-500">
-            Logged in as{" "}
-            <span className="font-semibold">
-              {getRoleLabel(user.role)}
-            </span>
-          </p>
-        )}
+        <p className="text-lg text-gray-500 mt-1">
+          Logged in as{" "}
+          <span className="font-medium text-gray-600">
+            {user?.role === "admin" ? "CEO" : user?.role}
+          </span>
+        </p>
       </div>
 
-      <div className="flex justify-between items-center mb-6">
-
+      <div className="flex gap-3 mb-5 items-center">
         <input
           type="text"
           placeholder="Search By Name, ID or Email"
-          onChange={handleFilter}
-          className="w-72 px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-teal-500"
+          value={search}
+          onChange={handleSearch}
+          className="
+            flex-1
+            px-4
+            py-2.5
+            border
+            border-gray-300
+            rounded-lg
+            text-base
+            outline-none
+            bg-white
+            focus:ring-2
+            focus:ring-teal-500
+          "
         />
 
-        {canAddUser && (
+        <select
+          value={roleFilter}
+          onChange={handleRoleChange}
+          className="
+            w-56
+            px-4
+            py-2.5
+            border
+            border-gray-300
+            rounded-lg
+            text-base
+            outline-none
+            bg-white
+            focus:ring-2
+            focus:ring-teal-500
+          "
+        >
+          <option value="">All Roles</option>
+
+          {availableRoles.map((role) => (
+            <option key={role} value={role}>
+              {role.charAt(0).toUpperCase() + role.slice(1)}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={departmentFilter}
+          onChange={handleDepartmentChange}
+          className="
+            w-56
+            px-4
+            py-2.5
+            border
+            border-gray-300
+            rounded-lg
+            text-base
+            outline-none
+            bg-white
+            focus:ring-2
+            focus:ring-teal-500
+          "
+        >
+          <option value="">All Departments</option>
+
+          {departments.map((department) => (
+            <option
+              key={department._id}
+              value={department._id}
+            >
+              {department.dep_name}
+            </option>
+          ))}
+        </select>
+
+        {canAddEmployee && (
           <Link
             to="/admin-dashboard/add-employee"
-            className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg transition"
+            className="
+              px-5
+              py-2.5
+              bg-teal-600
+              text-white
+              rounded-lg
+              font-medium
+              whitespace-nowrap
+              hover:bg-teal-700
+              transition
+            "
           >
-            Add New User
+            + Add Employee
           </Link>
         )}
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
         <DataTable
           columns={columns}
-          data={filteredEmployees}
-          progressPending={empLoading}
+          data={employees}
           pagination
-          highlightOnHover
-          responsive
-          striped
-          persistTableHead
+          paginationServer
+          paginationTotalRows={totalRows}
+          paginationDefaultPage={page}
+          paginationPerPage={limit}
+          paginationRowsPerPageOptions={[
+            5,
+            10,
+            20,
+            50,
+            100,
+          ]}
+          onChangePage={handlePageChange}
+          onChangeRowsPerPage={handlePerRowsChange}
+          progressPending={empLoading}
+          progressComponent={
+            <div className="py-10 text-base text-gray-500">
+              Loading employees...
+            </div>
+          }
+          noDataComponent={
+            <div className="py-10 text-base text-gray-500">
+              No employees found
+            </div>
+          }
+          customStyles={{
+            headCells: {
+              style: {
+                fontSize: "14px",
+                fontWeight: "600",
+                paddingTop: "12px",
+                paddingBottom: "12px",
+              },
+            },
+            cells: {
+              style: {
+                fontSize: "14px",
+                paddingTop: "10px",
+                paddingBottom: "10px",
+              },
+            },
+          }}
         />
       </div>
 
+      {totalRows > 0 && (
+        <div className="text-center mt-3 text-sm text-gray-500">
+          Page {page} of {totalPages} · {totalRows} employees
+        </div>
+      )}
     </div>
   );
 };

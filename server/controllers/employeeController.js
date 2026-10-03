@@ -13,8 +13,6 @@ import {
   isValidRole,
 } from "../utils/roleHierarchy.js";
 
-
-
 const storage = multer.memoryStorage();
 
 export const upload = multer({
@@ -32,8 +30,6 @@ export const upload = multer({
     }
   },
 });
-
-
 
 const uploadToCloudinary = (fileBuffer) => {
   return new Promise((resolve, reject) => {
@@ -55,8 +51,6 @@ const uploadToCloudinary = (fileBuffer) => {
   });
 };
 
-
-
 const deleteFromCloudinary = async (publicId) => {
   if (!publicId) {
     return;
@@ -69,19 +63,13 @@ const deleteFromCloudinary = async (publicId) => {
   }
 };
 
-
-
 export const addEmployee = async (req, res) => {
   let clerkUserId = null;
   let clerkUserWasCreated = false;
   let profileImagePublicId = "";
 
   try {
-    
-
     const requestedRole = req.body.role || "employee";
-
-    
 
     if (!isValidRole(requestedRole)) {
       return res.status(400).json({
@@ -90,8 +78,6 @@ export const addEmployee = async (req, res) => {
       });
     }
 
-    
-
     if (!canManageRole(req.user.role, requestedRole)) {
       return res.status(403).json({
         success: false,
@@ -99,28 +85,22 @@ export const addEmployee = async (req, res) => {
       });
     }
 
-    
-
     if (
       req.user.role === "hr" &&
       requestedRole === "employee"
     ) {
-      const hrEmployeeCount =
-        await Employee.countDocuments({
-          companyId: req.user.companyId,
-          createdBy: req.user._id,
-        });
+      const hrEmployeeCount = await Employee.countDocuments({
+        companyId: req.user.companyId,
+        createdBy: req.user._id,
+      });
 
       if (hrEmployeeCount >= 50) {
         return res.status(403).json({
           success: false,
-          error:
-            "You have reached the maximum limit of 50 employees.",
+          error: "You have reached the maximum limit of 50 employees.",
         });
       }
     }
-
-    
 
     const {
       name,
@@ -134,8 +114,6 @@ export const addEmployee = async (req, res) => {
       department,
       salary,
     } = req.body;
-
-    
 
     if (
       !name ||
@@ -151,11 +129,7 @@ export const addEmployee = async (req, res) => {
       });
     }
 
-    
-
     const employeeEmail = email.trim().toLowerCase();
-
-    
 
     const userExists = await User.findOne({
       email: employeeEmail,
@@ -164,12 +138,9 @@ export const addEmployee = async (req, res) => {
     if (userExists) {
       return res.status(400).json({
         success: false,
-        error:
-          "User with this email already exists in EMS",
+        error: "User with this email already exists in EMS",
       });
     }
-
-    
 
     const usernameExists = await User.findOne({
       username: username.trim(),
@@ -182,8 +153,6 @@ export const addEmployee = async (req, res) => {
       });
     }
 
-    
-
     const employeeIdExists = await Employee.findOne({
       employeeId: employeeId.trim(),
     });
@@ -194,8 +163,6 @@ export const addEmployee = async (req, res) => {
         error: "Employee ID already exists",
       });
     }
-
-    
 
     const departmentExists = await Department.findOne({
       _id: department,
@@ -209,8 +176,6 @@ export const addEmployee = async (req, res) => {
       });
     }
 
-    
-
     try {
       const existingClerkUsers =
         await clerkClient.users.getUserList({
@@ -218,8 +183,6 @@ export const addEmployee = async (req, res) => {
         });
 
       if (existingClerkUsers.data.length > 0) {
-        
-
         const existingClerkUser =
           existingClerkUsers.data[0];
 
@@ -232,8 +195,6 @@ export const addEmployee = async (req, res) => {
           employeeEmail
         );
       } else {
-        
-
         const clerkUser =
           await clerkClient.users.createUser({
             emailAddress: [employeeEmail],
@@ -265,8 +226,6 @@ export const addEmployee = async (req, res) => {
       });
     }
 
-    
-
     let profileImage = "";
 
     if (req.file) {
@@ -287,7 +246,6 @@ export const addEmployee = async (req, res) => {
           cloudinaryError
         );
 
-        // Rollback Clerk user if EMS created it
         if (
           clerkUserId &&
           clerkUserWasCreated
@@ -310,8 +268,6 @@ export const addEmployee = async (req, res) => {
         });
       }
     }
-
-    
 
     const newUser = new User({
       clerkUserId,
@@ -348,14 +304,12 @@ export const addEmployee = async (req, res) => {
         userError
       );
 
-      // Delete Cloudinary image
       if (profileImagePublicId) {
         await deleteFromCloudinary(
           profileImagePublicId
         );
       }
 
-      // Delete Clerk user if EMS created it
       if (
         clerkUserId &&
         clerkUserWasCreated
@@ -375,15 +329,12 @@ export const addEmployee = async (req, res) => {
       throw userError;
     }
 
-    
-
     try {
       const newEmployee = new Employee({
         userId: savedUser._id,
 
         companyId: req.user.companyId,
 
-        // Used for HR's 50 employee limit
         createdBy: req.user._id,
 
         employeeId: employeeId.trim(),
@@ -408,19 +359,16 @@ export const addEmployee = async (req, res) => {
         employeeError
       );
 
-      // Delete MongoDB User
       await User.deleteOne({
         _id: savedUser._id,
       });
 
-      // Delete Cloudinary image
       if (profileImagePublicId) {
         await deleteFromCloudinary(
           profileImagePublicId
         );
       }
 
-      // Delete Clerk user if EMS created it
       if (
         clerkUserId &&
         clerkUserWasCreated
@@ -440,8 +388,6 @@ export const addEmployee = async (req, res) => {
       throw employeeError;
     }
 
-    
-
     return res.status(201).json({
       success: true,
       message:
@@ -459,26 +405,51 @@ export const addEmployee = async (req, res) => {
   }
 };
 
-
-
 export const getEmployees = async (req, res) => {
   try {
-    const accessibleRoles = Object.keys({
+    const roleHierarchy = {
       admin: 5,
       manager: 4,
       hr: 3,
       tl: 2,
       employee: 1,
-    }).filter((role) =>
+    };
+
+    const accessibleRoles = Object.keys(
+      roleHierarchy
+    ).filter((role) =>
       canManageRole(
         req.user.role,
         role
       )
     );
 
-    const users = await User.find({
-      companyId: req.user.companyId,
+    const page = Math.max(
+      parseInt(req.query.page, 10) || 1,
+      1
+    );
 
+    const limit = Math.min(
+      Math.max(
+        parseInt(req.query.limit, 10) || 10,
+        1
+      ),
+      100
+    );
+
+    const skip = (page - 1) * limit;
+
+    const search =
+      req.query.search?.trim() || "";
+
+    const roleFilter =
+      req.query.role?.trim() || "";
+
+    const departmentFilter =
+      req.query.department?.trim() || "";
+
+    const userQuery = {
+      companyId: req.user.companyId,
       $or: [
         {
           role: {
@@ -489,80 +460,192 @@ export const getEmployees = async (req, res) => {
           _id: req.user._id,
         },
       ],
-    }).select("-password");
+    };
+
+    if (roleFilter) {
+      if (
+        !isValidRole(roleFilter) ||
+        (
+          !accessibleRoles.includes(
+            roleFilter
+          ) &&
+          roleFilter !== req.user.role
+        )
+      ) {
+        return res.status(403).json({
+          success: false,
+          error:
+            "You are not allowed to view users with this role",
+        });
+      }
+
+      userQuery.role = roleFilter;
+    }
+
+    if (search) {
+      userQuery.$and = [
+        {
+          $or: [
+            {
+              name: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              email: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+            {
+              username: {
+                $regex: search,
+                $options: "i",
+              },
+            },
+          ],
+        },
+      ];
+    }
+
+    const users = await User.find(
+      userQuery
+    )
+      .select("-password")
+      .lean();
 
     const userIds = users.map(
       (user) => user._id
     );
 
+    const employeeQuery = {
+      companyId: req.user.companyId,
+      userId: {
+        $in: userIds,
+      },
+    };
+
+    if (departmentFilter) {
+      const departmentExists =
+        await Department.findOne({
+          _id: departmentFilter,
+          companyId: req.user.companyId,
+        });
+
+      if (!departmentExists) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid department",
+        });
+      }
+
+      employeeQuery.department =
+        departmentFilter;
+    }
+
+    const total =
+      await Employee.countDocuments(
+        employeeQuery
+      );
+
     const employees =
-      await Employee.find({
-        companyId: req.user.companyId,
+      await Employee.find(
+        employeeQuery
+      )
+        .populate(
+          "userId",
+          "-password"
+        )
+        .populate("department")
+        .sort({
+          createdAt: -1,
+        })
+        .skip(skip)
+        .limit(limit)
+        .lean();
 
-        userId: {
-          $in: userIds,
-        },
-      })
-        .populate("userId", "-password")
-        .populate("department");
+    const formatted =
+      employees.map(
+        (emp) => ({
+          _id: emp._id,
 
-    const formatted = employees.map(
-      (emp) => ({
-        _id: emp._id,
+          userId:
+            emp.userId?._id,
 
-        userId:
-          emp.userId?._id,
+          employeeId:
+            emp.employeeId,
 
-        employeeId:
-          emp.employeeId,
+          name:
+            emp.userId?.name ||
+            "N/A",
 
-        name:
-          emp.userId?.name ||
-          "N/A",
+          email:
+            emp.userId?.email ||
+            "N/A",
 
-        email:
-          emp.userId?.email ||
-          "N/A",
+          username:
+            emp.userId?.username ||
+            "",
 
-        username:
-          emp.userId?.username ||
-          "",
+          profileImage:
+            emp.userId?.profileImage ||
+            "",
 
-        profileImage:
-          emp.userId?.profileImage ||
-          "",
+          dep_name:
+            emp.department?.dep_name ||
+            "Not Assigned",
 
-        dep_name:
-          emp.department?.dep_name ||
-          "Not Assigned",
+          departmentId:
+            emp.department?._id ||
+            null,
 
-        dob: emp.dob
-          ? new Date(
-              emp.dob
-            ).toDateString()
-          : "",
+          dob: emp.dob
+            ? new Date(
+                emp.dob
+              ).toDateString()
+            : "",
 
-        gender:
-          emp.gender,
+          gender:
+            emp.gender,
 
-        maritalStatus:
-          emp.maritalStatus,
+          maritalStatus:
+            emp.maritalStatus,
 
-        designation:
-          emp.designation,
+          designation:
+            emp.designation,
 
-        salary:
-          emp.salary,
+          salary:
+            emp.salary,
 
-        role:
-          emp.userId?.role ||
-          "",
-      })
-    );
+          role:
+            emp.userId?.role ||
+            "",
+        })
+      );
+
+    const totalPages =
+      Math.ceil(
+        total / limit
+      );
 
     return res.status(200).json({
       success: true,
+
       employees: formatted,
+
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+
+        hasNextPage:
+          page < totalPages,
+
+        hasPreviousPage:
+          page > 1,
+      },
     });
   } catch (error) {
     console.log(
@@ -572,12 +655,11 @@ export const getEmployees = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: "Get employees server error",
+      error:
+        "Get employees server error",
     });
   }
 };
-
-
 
 export const getEmployee = async (
   req,
@@ -592,7 +674,10 @@ export const getEmployee = async (
         companyId:
           req.user.companyId,
       })
-        .populate("userId", "-password")
+        .populate(
+          "userId",
+          "-password"
+        )
         .populate("department");
 
     if (!employee) {
@@ -648,8 +733,6 @@ export const getEmployee = async (
   }
 };
 
-
-
 export const updateEmployee = async (
   req,
   res
@@ -668,7 +751,6 @@ export const updateEmployee = async (
       role,
     } = req.body;
 
-
     const employee =
       await Employee.findOne({
         _id: id,
@@ -683,8 +765,6 @@ export const updateEmployee = async (
       });
     }
 
-    
-
     if (
       employee.userId._id.toString() ===
       req.user._id.toString()
@@ -695,8 +775,6 @@ export const updateEmployee = async (
           "Your own account cannot be changed here",
       });
     }
-
-    
 
     const currentTargetRole =
       employee.userId.role;
@@ -713,8 +791,6 @@ export const updateEmployee = async (
           "You are not allowed to manage this user",
       });
     }
-
-    
 
     const updatedRole =
       role || currentTargetRole;
@@ -739,8 +815,6 @@ export const updateEmployee = async (
       });
     }
 
-    
-
     if (department) {
       const departmentExists =
         await Department.findOne({
@@ -756,8 +830,6 @@ export const updateEmployee = async (
         });
       }
     }
-
-    
 
     let newProfileImage =
       employee.userId.profileImage ||
@@ -779,7 +851,6 @@ export const updateEmployee = async (
       newProfileImagePublicId =
         cloudinaryResult.public_id;
 
-      // Delete old image
       if (
         employee.userId
           .profileImagePublicId
@@ -790,8 +861,6 @@ export const updateEmployee = async (
         );
       }
     }
-
-    
 
     if (employeeId !== undefined) {
       employee.employeeId =
@@ -832,8 +901,6 @@ export const updateEmployee = async (
       new Date();
 
     await employee.save();
-
-    
 
     await User.findOneAndUpdate(
       {
@@ -885,16 +952,12 @@ export const updateEmployee = async (
   }
 };
 
-
-
 export const deleteEmployee = async (
   req,
   res
 ) => {
   try {
     const { id } = req.params;
-
-    
 
     const employee =
       await Employee.findOne({
@@ -909,8 +972,6 @@ export const deleteEmployee = async (
         error: "Employee not found",
       });
     }
-
-    
 
     const employeeUser =
       await User.findOne({
@@ -927,8 +988,6 @@ export const deleteEmployee = async (
       });
     }
 
-    
-
     if (
       employeeUser._id.toString() ===
       req.user._id.toString()
@@ -939,8 +998,6 @@ export const deleteEmployee = async (
           "You cannot delete your own account",
       });
     }
-
-    
 
     if (
       !canManageRole(
@@ -955,23 +1012,17 @@ export const deleteEmployee = async (
       });
     }
 
-    
-
     await Salary.deleteMany({
       employeeId: employee._id,
       companyId:
         req.user.companyId,
     });
 
-    
-
     await Leave.deleteMany({
       employeeId: employee._id,
       companyId:
         req.user.companyId,
     });
-
-    
 
     if (
       employeeUser.profileImagePublicId
@@ -980,8 +1031,6 @@ export const deleteEmployee = async (
         employeeUser.profileImagePublicId
       );
     }
-
-    
 
     if (employeeUser.clerkUserId) {
       if (
@@ -1011,15 +1060,11 @@ export const deleteEmployee = async (
       }
     }
 
-    
-
     await User.findOneAndDelete({
       _id: employeeUser._id,
       companyId:
         req.user.companyId,
     });
-
-    
 
     await Employee.deleteOne({
       _id: employee._id,
@@ -1045,8 +1090,6 @@ export const deleteEmployee = async (
     });
   }
 };
-
-
 
 export const getEmployeeProfile = async (
   req,

@@ -10,53 +10,49 @@ const MySalary = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchSalary = async () => {
+      try {
+        setLoading(true);
+
+        const token = await getToken();
+
+        if (!token) {
+          console.log("CLERK TOKEN NOT FOUND");
+          return;
+        }
+
+        const response = await axios.get(
+          `${API_URL}/api/salary/my-salary`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          setSalaries(response.data.salaries || []);
+        }
+      } catch (error) {
+        console.error(
+          "GET MY SALARY ERROR:",
+          error.response?.status,
+          error.response?.data || error.message
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (getToken) {
       fetchSalary();
     }
   }, [getToken]);
 
-  const fetchSalary = async () => {
-    try {
-      const token = await getToken();
-
-      if (!token) {
-        console.log("CLERK TOKEN NOT FOUND");
-        return;
-      }
-
-      const response = await axios.get(
-        `${API_URL}/api/salary/my-salary`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      console.log(
-        "MY SALARY RESPONSE:",
-        response.data
-      );
-
-      if (response.data.success) {
-        setSalaries(response.data.salaries || []);
-      }
-    } catch (error) {
-      console.error(
-        "GET MY SALARY ERROR:",
-        error.response?.status,
-        error.response?.data ||
-          error.message
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[70vh]">
-        <h2 className="text-2xl font-semibold">
+        <h2 className="text-2xl font-semibold text-gray-600">
           Loading salary...
         </h2>
       </div>
@@ -75,7 +71,7 @@ const MySalary = () => {
         </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
         <table className="min-w-full">
           <thead className="bg-teal-600 text-white">
             <tr>
@@ -145,18 +141,7 @@ const MySalary = () => {
                   </td>
 
                   <td className="px-6 py-4">
-                    {salary.payDate
-                      ? new Date(
-                          salary.payDate
-                        ).toLocaleDateString(
-                          "en-GB",
-                          {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          }
-                        )
-                      : "N/A"}
+                    {salary.payDate || "N/A"}
                   </td>
 
                   <td className="px-6 py-4 text-center">
@@ -167,7 +152,7 @@ const MySalary = () => {
                           : "bg-yellow-100 text-yellow-700"
                       }`}
                     >
-                      {salary.status}
+                      {salary.status || "Pending"}
                     </span>
                   </td>
                 </tr>

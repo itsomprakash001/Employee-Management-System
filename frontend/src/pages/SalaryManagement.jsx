@@ -1,38 +1,53 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/useAuth";
 import API_URL from "../../api";
 
 const SalaryManagement = () => {
   const navigate = useNavigate();
+  const { getToken } = useAuth();
 
   const [salaries, setSalaries] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchSalaries = async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/api/salary`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (response.data.success) {
-        setSalaries(response.data.salaries);
-      }
-    } catch (error) {
-      console.log("FETCH SALARY ERROR:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchSalaries();
-  }, []);
+    const fetchSalaries = async () => {
+      try {
+        const token = await getToken();
+
+        if (!token) {
+          console.log("CLERK TOKEN NOT FOUND");
+          return;
+        }
+
+        const response = await axios.get(
+          `${API_URL}/api/salary`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          setSalaries(response.data.salaries || []);
+        }
+      } catch (error) {
+        console.log(
+          "FETCH SALARY ERROR:",
+          error.response?.status,
+          error.response?.data || error.message
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (getToken) {
+      fetchSalaries();
+    }
+  }, [getToken]);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -42,8 +57,11 @@ const SalaryManagement = () => {
         </h2>
 
         <button
-          onClick={() => navigate("/admin-dashboard/add-salary")}
-          className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-md transition"
+          type="button"
+          onClick={() =>
+            navigate("/admin-dashboard/salary/add")
+          }
+          className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-md transition cursor-pointer"
         >
           Add Salary
         </button>
@@ -90,19 +108,31 @@ const SalaryManagement = () => {
                     </td>
 
                     <td className="p-3">
-                      ₹{salary.basicSalary ?? 0}
+                      ₹
+                      {Number(
+                        salary.basicSalary || 0
+                      ).toLocaleString("en-IN")}
                     </td>
 
                     <td className="p-3">
-                      ₹{salary.allowances ?? 0}
+                      ₹
+                      {Number(
+                        salary.allowances || 0
+                      ).toLocaleString("en-IN")}
                     </td>
 
                     <td className="p-3">
-                      ₹{salary.deductions ?? 0}
+                      ₹
+                      {Number(
+                        salary.deductions || 0
+                      ).toLocaleString("en-IN")}
                     </td>
 
                     <td className="p-3 font-semibold">
-                      ₹{salary.netSalary ?? 0}
+                      ₹
+                      {Number(
+                        salary.netSalary || 0
+                      ).toLocaleString("en-IN")}
                     </td>
 
                     <td className="p-3">

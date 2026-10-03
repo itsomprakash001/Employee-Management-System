@@ -31,11 +31,55 @@ const canManageRole = (
   return actorLevel > targetLevel;
 };
 
+const getRoleLabel = (role) => {
+  switch (role) {
+    case "admin":
+      return "CEO";
+
+    case "manager":
+      return "Manager";
+
+    case "hr":
+      return "HR";
+
+    case "tl":
+      return "Team Leader";
+
+    case "employee":
+      return "Employee";
+
+    default:
+      return role || "";
+  }
+};
+
+const getRoleBadgeClass = (role) => {
+  switch (role) {
+    case "admin":
+      return "bg-purple-100 text-purple-700 border-purple-200";
+
+    case "manager":
+      return "bg-blue-100 text-blue-700 border-blue-200";
+
+    case "hr":
+      return "bg-pink-100 text-pink-700 border-pink-200";
+
+    case "tl":
+      return "bg-orange-100 text-orange-700 border-orange-200";
+
+    case "employee":
+      return "bg-gray-100 text-gray-700 border-gray-200";
+
+    default:
+      return "bg-gray-100 text-gray-700 border-gray-200";
+  }
+};
+
 export const columns = [
   {
     name: "S.No",
     selector: (row) => row.sno,
-    width: "55px",
+    width: "65px",
     center: true,
   },
 
@@ -43,49 +87,73 @@ export const columns = [
     name: "ID",
     selector: (row) => row.employeeId,
     sortable: true,
-    width: "95px",
+    width: "100px",
   },
 
   {
     name: "Employee",
     cell: (row) => (
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 py-1">
         <img
           src={
             row.profileImage ||
             "https://via.placeholder.com/40"
           }
           alt={row.name || "Employee"}
-          className="w-9 h-9 rounded-full object-cover border border-gray-200 shrink-0"
+          className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0"
         />
 
-        <span className="font-medium text-gray-800 truncate">
-          {row.name}
-        </span>
+        <div className="min-w-0">
+          <p className="font-semibold text-gray-800 truncate">
+            {row.name || "N/A"}
+          </p>
+
+          <p className="text-xs text-gray-500 truncate">
+            {row.email || ""}
+          </p>
+        </div>
       </div>
     ),
     sortable: true,
-    minWidth: "150px",
+    minWidth: "230px",
+  },
+
+  {
+    name: "Role",
+    cell: (row) => (
+      <span
+        className={`px-2.5 py-1 rounded-full border text-xs font-semibold ${getRoleBadgeClass(
+          row.role
+        )}`}
+      >
+        {getRoleLabel(row.role)}
+      </span>
+    ),
+    sortable: true,
+    width: "125px",
+    center: true,
   },
 
   {
     name: "Department",
-    selector: (row) => row.dep_name,
+    selector: (row) =>
+      row.dep_name || "Not Assigned",
     sortable: true,
-    minWidth: "110px",
+    minWidth: "130px",
   },
 
   {
     name: "Designation",
-    selector: (row) => row.designation,
+    selector: (row) =>
+      row.designation || "N/A",
     sortable: true,
-    minWidth: "110px",
+    minWidth: "130px",
   },
 
   {
     name: "Salary",
     cell: (row) => (
-      <span className="font-medium text-gray-700">
+      <span className="font-semibold text-gray-700">
         ₹
         {Number(
           row.salary || 0
@@ -93,7 +161,7 @@ export const columns = [
       </span>
     ),
     sortable: true,
-    width: "100px",
+    width: "120px",
   },
 
   {
@@ -102,7 +170,7 @@ export const columns = [
       <EmployeeButtons row={row} />
     ),
     center: true,
-    minWidth: "255px",
+    minWidth: "280px",
   },
 ];
 
@@ -165,7 +233,8 @@ export const fetchDepartments = async (
 };
 
 export const fetchEmployees = async (
-  getToken
+  getToken,
+  options = {}
 ) => {
   let employees = [];
 
@@ -192,6 +261,14 @@ export const fetchEmployees = async (
       return employees;
     }
 
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      role = "",
+      department = "",
+    } = options;
+
     const response =
       await axios.get(
         `${API_URL}/api/employee`,
@@ -199,6 +276,27 @@ export const fetchEmployees = async (
           headers: {
             Authorization:
               `Bearer ${token}`,
+          },
+
+          params: {
+            page,
+            limit,
+            ...(search.trim()
+              ? {
+                  search:
+                    search.trim(),
+                }
+              : {}),
+            ...(role
+              ? {
+                  role,
+                }
+              : {}),
+            ...(department
+              ? {
+                  department,
+                }
+              : {}),
           },
         }
       );
@@ -249,8 +347,6 @@ export const EmployeeButtons = ({
       targetRole
     );
 
-  // Employee can view own record.
-  // Higher roles can view lower roles.
   const canView =
     isSelf ||
     canManage;
@@ -260,7 +356,7 @@ export const EmployeeButtons = ({
   }
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1.5 py-1">
       <button
         type="button"
         onClick={() =>
@@ -269,13 +365,14 @@ export const EmployeeButtons = ({
           )
         }
         className="
-          px-2.5 py-1
+          px-2.5 py-1.5
           bg-teal-50 text-teal-700
           border border-teal-200
-          rounded
-          text-xs font-medium
+          rounded-md
+          text-xs font-semibold
           hover:bg-teal-600 hover:text-white
-          transition cursor-pointer
+          transition
+          cursor-pointer
         "
       >
         View
@@ -291,13 +388,14 @@ export const EmployeeButtons = ({
               )
             }
             className="
-              px-2.5 py-1
+              px-2.5 py-1.5
               bg-blue-50 text-blue-700
               border border-blue-200
-              rounded
-              text-xs font-medium
+              rounded-md
+              text-xs font-semibold
               hover:bg-blue-600 hover:text-white
-              transition cursor-pointer
+              transition
+              cursor-pointer
             "
           >
             Edit
@@ -311,13 +409,14 @@ export const EmployeeButtons = ({
               )
             }
             className="
-              px-2.5 py-1
+              px-2.5 py-1.5
               bg-purple-50 text-purple-700
               border border-purple-200
-              rounded
-              text-xs font-medium
+              rounded-md
+              text-xs font-semibold
               hover:bg-purple-600 hover:text-white
-              transition cursor-pointer
+              transition
+              cursor-pointer
             "
           >
             Salary
@@ -331,13 +430,14 @@ export const EmployeeButtons = ({
               )
             }
             className="
-              px-2.5 py-1
+              px-2.5 py-1.5
               bg-orange-50 text-orange-700
               border border-orange-200
-              rounded
-              text-xs font-medium
+              rounded-md
+              text-xs font-semibold
               hover:bg-orange-500 hover:text-white
-              transition cursor-pointer
+              transition
+              cursor-pointer
             "
           >
             Leave

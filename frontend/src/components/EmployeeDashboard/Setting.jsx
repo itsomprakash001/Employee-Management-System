@@ -4,7 +4,6 @@ import {
   useUser,
   useReverification,
 } from "@clerk/react";
-
 import { useAuth } from "../../context/useAuth";
 import API_URL from "../../api";
 
@@ -14,7 +13,6 @@ const Setting = () => {
 
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-
   const [step, setStep] = useState("email");
 
   const [message, setMessage] = useState("");
@@ -52,16 +50,12 @@ const Setting = () => {
       newEmail ===
       currentEmail.trim().toLowerCase()
     ) {
-      setError(
-        "Please enter a different email address."
-      );
+      setError("Please enter a different email address.");
       return;
     }
 
     if (!user) {
-      setError(
-        "User information is not available."
-      );
+      setError("User information is not available.");
       return;
     }
 
@@ -85,15 +79,11 @@ const Setting = () => {
       });
 
       setStep("otp");
-
       setMessage(
         "Verification OTP has been sent to your new email address."
       );
     } catch (err) {
-      console.log(
-        "SEND EMAIL OTP ERROR:",
-        err
-      );
+      console.log("SEND EMAIL OTP ERROR:", err);
 
       setError(
         err?.errors?.[0]?.message ||
@@ -126,11 +116,9 @@ const Setting = () => {
       setLoading(true);
 
       const verification =
-        await pendingEmailAddress.attemptVerification(
-          {
-            code: otp.trim(),
-          }
-        );
+        await pendingEmailAddress.attemptVerification({
+          code: otp.trim(),
+        });
 
       if (
         verification?.verification?.status !==
@@ -163,9 +151,7 @@ const Setting = () => {
 
       const response = await axios.put(
         `${API_URL}/api/auth/update-email`,
-        {
-          email: newEmail,
-        },
+        { email: newEmail },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -181,19 +167,14 @@ const Setting = () => {
         return;
       }
 
-      setMessage(
-        "Login email updated successfully."
-      );
+      setMessage("Login email updated successfully.");
 
       setEmail("");
       setOtp("");
       setPendingEmailAddress(null);
       setStep("email");
     } catch (err) {
-      console.log(
-        "VERIFY EMAIL OTP ERROR:",
-        err
-      );
+      console.log("VERIFY EMAIL OTP ERROR:", err);
 
       setError(
         err?.response?.data?.error ||
@@ -215,117 +196,193 @@ const Setting = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white shadow-lg rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-center mb-6 text-teal-600">
-        Login Settings
-      </h2>
+    <div className="min-h-full bg-gray-50 p-5">
+      <div className="max-w-md mx-auto">
+        <div className="mb-5">
+          <h1 className="text-3xl font-bold text-black">
+            Login Settings
+          </h1>
 
-      {message && (
-        <p className="text-green-600 text-center font-medium mb-4">
-          {message}
-        </p>
-      )}
+          <p className="text-sm text-gray-500 mt-1">
+            Manage your login email address
+          </p>
+        </div>
 
-      {error && (
-        <p className="text-red-600 text-center font-medium mb-4">
-          {error}
-        </p>
-      )}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          {message && (
+            <div className="mb-4 p-3 rounded-lg bg-green-100 text-green-700 text-sm font-medium text-center">
+              {message}
+            </div>
+          )}
 
-      <div className="mb-6">
-        <p className="text-gray-600 text-sm">
-          Current Login Email
-        </p>
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-100 text-red-700 text-sm font-medium text-center">
+              {error}
+            </div>
+          )}
 
-        <p className="font-medium mt-1 break-all">
-          {currentEmail || "Not available"}
-        </p>
+          <div className="mb-5 p-4 bg-gray-50 rounded-lg">
+            <p className="text-xs font-semibold text-gray-500 uppercase">
+              Current Login Email
+            </p>
+
+            <p className="text-sm font-medium text-gray-800 mt-1 break-all">
+              {currentEmail || "Not available"}
+            </p>
+          </div>
+
+          {step === "email" && (
+            <form onSubmit={sendOtp} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-semibold text-gray-700 mb-1.5"
+                >
+                  New Login Email
+                </label>
+
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="Enter new email"
+                  value={email}
+                  onChange={(e) =>
+                    setEmail(e.target.value)
+                  }
+                  required
+                  className="
+                    w-full
+                    border
+                    border-gray-300
+                    rounded-lg
+                    px-3
+                    py-2.5
+                    text-sm
+                    outline-none
+                    focus:ring-2
+                    focus:ring-teal-500
+                  "
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="
+                  w-full
+                  bg-teal-600
+                  hover:bg-teal-700
+                  disabled:bg-gray-400
+                  disabled:cursor-not-allowed
+                  text-white
+                  py-2.5
+                  rounded-lg
+                  text-sm
+                  font-semibold
+                  transition
+                "
+              >
+                {loading ? "Sending OTP..." : "Send OTP"}
+              </button>
+            </form>
+          )}
+
+          {step === "otp" && (
+            <form onSubmit={verifyOtp} className="space-y-4">
+              <div className="p-3 bg-teal-50 rounded-lg">
+                <p className="text-xs text-gray-500">
+                  Verification OTP sent to
+                </p>
+
+                <p className="text-sm font-semibold text-gray-800 mt-1 break-all">
+                  {email}
+                </p>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="otp"
+                  className="block text-sm font-semibold text-gray-700 mb-1.5"
+                >
+                  Verification OTP
+                </label>
+
+                <input
+                  id="otp"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Enter 6-digit OTP"
+                  value={otp}
+                  onChange={(e) =>
+                    setOtp(
+                      e.target.value.replace(/\D/g, "")
+                    )
+                  }
+                  required
+                  className="
+                    w-full
+                    border
+                    border-gray-300
+                    rounded-lg
+                    px-3
+                    py-2.5
+                    text-sm
+                    text-center
+                    tracking-[0.3em]
+                    outline-none
+                    focus:ring-2
+                    focus:ring-teal-500
+                  "
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="
+                  w-full
+                  bg-teal-600
+                  hover:bg-teal-700
+                  disabled:bg-gray-400
+                  disabled:cursor-not-allowed
+                  text-white
+                  py-2.5
+                  rounded-lg
+                  text-sm
+                  font-semibold
+                  transition
+                "
+              >
+                {loading
+                  ? "Updating..."
+                  : "Verify OTP & Update Email"}
+              </button>
+
+              <button
+                type="button"
+                onClick={cancelOtp}
+                disabled={loading}
+                className="
+                  w-full
+                  py-2.5
+                  rounded-lg
+                  border
+                  border-gray-300
+                  text-gray-700
+                  hover:bg-gray-50
+                  disabled:opacity-50
+                  text-sm
+                  font-semibold
+                  transition
+                "
+              >
+                Change Email
+              </button>
+            </form>
+          )}
+        </div>
       </div>
-
-      {step === "email" && (
-        <form onSubmit={sendOtp}>
-          <label className="block text-sm font-medium mb-2">
-            New Login Email
-          </label>
-
-          <input
-            type="email"
-            placeholder="Enter new email"
-            value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
-            className="w-full border p-3 rounded mb-6 focus:outline-none focus:ring-2 focus:ring-teal-500"
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full text-white p-3 rounded transition duration-200 ${
-              loading
-                ? "bg-teal-400 cursor-not-allowed"
-                : "bg-teal-600 hover:bg-teal-700 cursor-pointer"
-            }`}
-          >
-            {loading
-              ? "Sending OTP..."
-              : "Send OTP"}
-          </button>
-        </form>
-      )}
-
-      {step === "otp" && (
-        <form onSubmit={verifyOtp}>
-          <p className="text-sm text-gray-600 mb-2">
-            Verification OTP sent to:
-          </p>
-
-          <p className="font-medium mb-5 break-all">
-            {email}
-          </p>
-
-          <label className="block text-sm font-medium mb-2">
-            Verification OTP
-          </label>
-
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) =>
-              setOtp(e.target.value)
-            }
-            className="w-full border p-3 rounded mb-5 text-center tracking-widest focus:outline-none focus:ring-2 focus:ring-teal-500"
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full text-white p-3 rounded transition duration-200 ${
-              loading
-                ? "bg-teal-400 cursor-not-allowed"
-                : "bg-teal-600 hover:bg-teal-700 cursor-pointer"
-            }`}
-          >
-            {loading
-              ? "Updating..."
-              : "Verify OTP & Update Email"}
-          </button>
-
-          <button
-            type="button"
-            onClick={cancelOtp}
-            disabled={loading}
-            className="w-full mt-3 p-3 rounded border border-gray-300 hover:bg-gray-100"
-          >
-            Change Email
-          </button>
-        </form>
-      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import {
   FaUser,
@@ -26,7 +26,7 @@ const Profile = () => {
         const token = await getToken();
 
         if (!token) {
-          console.log("CLERK TOKEN NOT FOUND");
+          setLoading(false);
           return;
         }
 
@@ -39,20 +39,13 @@ const Profile = () => {
           }
         );
 
-        console.log(
-          "EMPLOYEE PROFILE RESPONSE:",
-          response.data
-        );
-
         if (response.data.success) {
           setEmployee(response.data.employee);
         }
       } catch (error) {
         console.log(
           "FETCH PROFILE ERROR:",
-          error.response?.status,
-          error.response?.data ||
-            error.message
+          error.response?.data || error.message
         );
       } finally {
         setLoading(false);
@@ -66,217 +59,186 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[70vh]">
-        <h2 className="text-2xl font-semibold">
-          Loading...
-        </h2>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="text-sm font-medium text-gray-500">
+          Loading profile...
+        </div>
       </div>
     );
   }
 
   if (!employee) {
     return (
-      <div className="flex justify-center items-center h-[70vh]">
-        <h2 className="text-2xl font-semibold text-red-600">
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="rounded-lg border bg-white px-6 py-5 text-sm font-medium text-red-600 shadow-sm">
           Unable to load profile
-        </h2>
+        </div>
       </div>
     );
   }
 
+  const salary = Number(employee.salary || 0).toLocaleString("en-IN");
+
+  const formatDate = (date) =>
+    date
+      ? new Date(date).toLocaleDateString("en-GB")
+      : "N/A";
+
+  const InfoRow = ({ icon, label, value }) => (
+    <div className="flex items-center justify-between gap-4 border-b border-gray-100 py-3 last:border-0">
+      <div className="flex items-center gap-3 text-sm text-gray-500">
+        {icon}
+        <span>{label}</span>
+      </div>
+
+      <span className="max-w-[60%] break-words text-right text-sm font-semibold text-gray-800">
+        {value || "N/A"}
+      </span>
+    </div>
+  );
+
   return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-teal-600 to-cyan-600"></div>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="mx-auto max-w-6xl">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="h-24 bg-gradient-to-r from-teal-600 to-cyan-600" />
 
-        <div className="px-10 pb-10">
-          <div className="flex flex-col md:flex-row items-center md:items-end -mt-20">
-            <img
-              src={
-                employee.profileImage ||
-                "https://via.placeholder.com/160"
-              }
-              alt="Profile"
-              className="w-40 h-40 rounded-full border-4 border-white object-cover shadow-lg bg-white"
-            />
+          <div className="px-5 pb-6 md:px-7">
+            <div className="-mt-12 flex flex-col items-center gap-4 md:flex-row md:items-end">
+              <img
+                src={
+                  employee.profileImage ||
+                  "https://via.placeholder.com/140"
+                }
+                alt="Profile"
+                className="h-28 w-28 rounded-full border-4 border-white bg-white object-cover shadow-md"
+              />
 
-            <div className="md:ml-8 mt-5 md:mt-0 text-center md:text-left">
-              <h1 className="text-4xl font-bold text-gray-800">
-                {employee.name}
-              </h1>
+              <div className="text-center md:pb-1 md:text-left">
+                <h1 className="text-2xl font-bold text-gray-800">
+                  {employee.name}
+                </h1>
 
-              <p className="text-lg text-gray-500 mt-2">
-                {employee.designation}
-              </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {employee.designation || "Employee"}
+                </p>
 
-              <span className="inline-block mt-4 bg-teal-100 text-teal-700 px-5 py-2 rounded-full font-semibold">
-                Employee ID : {employee.employeeId}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
-            <div className="bg-white border rounded-xl shadow-md p-6 text-center hover:shadow-xl transition">
-              <FaBuilding className="text-4xl text-teal-600 mx-auto mb-3" />
-
-              <p className="text-gray-500">
-                Department
-              </p>
-
-              <h2 className="text-xl font-bold">
-                {employee.department}
-              </h2>
-            </div>
-
-            <div className="bg-white border rounded-xl shadow-md p-6 text-center hover:shadow-xl transition">
-              <FaBriefcase className="text-4xl text-blue-600 mx-auto mb-3" />
-
-              <p className="text-gray-500">
-                Designation
-              </p>
-
-              <h2 className="text-xl font-bold">
-                {employee.designation}
-              </h2>
-            </div>
-
-            <div className="bg-white border rounded-xl shadow-md p-6 text-center hover:shadow-xl transition">
-              <FaMoneyBillWave className="text-4xl text-green-600 mx-auto mb-3" />
-
-              <p className="text-gray-500">
-                Salary
-              </p>
-
-              <h2 className="text-xl font-bold">
-                ₹
-                {Number(
-                  employee.salary || 0
-                ).toLocaleString("en-IN")}
-              </h2>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8 mt-10">
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-bold text-teal-600 border-b pb-3 mb-5">
-                Personal Information
-              </h2>
-
-              <div className="space-y-4">
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaUser />
-                    Name
-                  </span>
-
-                  <span className="font-semibold text-right">
-                    {employee.name}
-                  </span>
-                </div>
-
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaEnvelope />
-                    Email
-                  </span>
-
-                  <span className="font-semibold text-right break-all">
-                    {employee.email}
-                  </span>
-                </div>
-
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaVenusMars />
-                    Gender
-                  </span>
-
-                  <span className="font-semibold">
-                    {employee.gender}
-                  </span>
-                </div>
-
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaBirthdayCake />
-                    Date of Birth
-                  </span>
-
-                  <span className="font-semibold">
-                    {employee.dob
-                      ? new Date(
-                          employee.dob
-                        ).toLocaleDateString(
-                          "en-GB"
-                        )
-                      : "N/A"}
-                  </span>
-                </div>
-
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaHeart />
-                    Marital Status
-                  </span>
-
-                  <span className="font-semibold">
-                    {employee.maritalStatus}
-                  </span>
-                </div>
+                <span className="mt-2 inline-block rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700">
+                  Employee ID: {employee.employeeId}
+                </span>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-bold text-teal-600 border-b pb-3 mb-5">
-                Employment Information
-              </h2>
-
-              <div className="space-y-4">
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaIdBadge />
-                    Employee ID
-                  </span>
-
-                  <span className="font-semibold">
-                    {employee.employeeId}
-                  </span>
-                </div>
-
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaBuilding />
+            <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-3">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-3">
+                  <FaBuilding className="text-lg text-teal-600" />
+                  <span className="text-xs font-medium text-gray-500">
                     Department
                   </span>
-
-                  <span className="font-semibold">
-                    {employee.department}
-                  </span>
                 </div>
+                <p className="font-semibold text-gray-800">
+                  {employee.department || "N/A"}
+                </p>
+              </div>
 
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaBriefcase />
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-3">
+                  <FaBriefcase className="text-lg text-blue-600" />
+                  <span className="text-xs font-medium text-gray-500">
                     Designation
                   </span>
-
-                  <span className="font-semibold">
-                    {employee.designation}
-                  </span>
                 </div>
+                <p className="font-semibold text-gray-800">
+                  {employee.designation || "N/A"}
+                </p>
+              </div>
 
-                <div className="flex justify-between gap-4">
-                  <span className="flex items-center gap-2 text-gray-600">
-                    <FaMoneyBillWave />
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-3">
+                  <FaMoneyBillWave className="text-lg text-green-600" />
+                  <span className="text-xs font-medium text-gray-500">
                     Monthly Salary
                   </span>
+                </div>
+                <p className="font-semibold text-gray-800">
+                  ₹{salary}
+                </p>
+              </div>
+            </div>
 
-                  <span className="font-semibold text-green-600">
-                    ₹
-                    {Number(
-                      employee.salary || 0
-                    ).toLocaleString("en-IN")}
-                  </span>
+            <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <div className="rounded-lg border border-gray-200 bg-white">
+                <div className="border-b border-gray-200 px-5 py-4">
+                  <h2 className="text-base font-semibold text-gray-800">
+                    Personal Information
+                  </h2>
+                </div>
+
+                <div className="px-5">
+                  <InfoRow
+                    icon={<FaUser className="text-teal-600" />}
+                    label="Name"
+                    value={employee.name}
+                  />
+
+                  <InfoRow
+                    icon={<FaEnvelope className="text-teal-600" />}
+                    label="Email"
+                    value={employee.email}
+                  />
+
+                  <InfoRow
+                    icon={<FaVenusMars className="text-teal-600" />}
+                    label="Gender"
+                    value={employee.gender}
+                  />
+
+                  <InfoRow
+                    icon={<FaBirthdayCake className="text-teal-600" />}
+                    label="Date of Birth"
+                    value={formatDate(employee.dob)}
+                  />
+
+                  <InfoRow
+                    icon={<FaHeart className="text-teal-600" />}
+                    label="Marital Status"
+                    value={employee.maritalStatus}
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-gray-200 bg-white">
+                <div className="border-b border-gray-200 px-5 py-4">
+                  <h2 className="text-base font-semibold text-gray-800">
+                    Employment Information
+                  </h2>
+                </div>
+
+                <div className="px-5">
+                  <InfoRow
+                    icon={<FaIdBadge className="text-blue-600" />}
+                    label="Employee ID"
+                    value={employee.employeeId}
+                  />
+
+                  <InfoRow
+                    icon={<FaBuilding className="text-blue-600" />}
+                    label="Department"
+                    value={employee.department}
+                  />
+
+                  <InfoRow
+                    icon={<FaBriefcase className="text-blue-600" />}
+                    label="Designation"
+                    value={employee.designation}
+                  />
+
+                  <InfoRow
+                    icon={<FaMoneyBillWave className="text-green-600" />}
+                    label="Monthly Salary"
+                    value={`₹${salary}`}
+                  />
                 </div>
               </div>
             </div>

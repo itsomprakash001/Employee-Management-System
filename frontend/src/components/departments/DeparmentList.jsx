@@ -14,7 +14,7 @@ const DepartmentList = () => {
   const [depLoading, setDepLoading] = useState(false);
   const [filteredDepartment, setFilteredDepartments] = useState([]);
 
-  const isAdmin = user?.role === "admin";
+  const canManage = ["admin", "manager"].includes(user?.role);
 
   const onDepartmentDelete = (id) => {
     const data = departments.filter((dep) => dep._id !== id);
@@ -57,7 +57,7 @@ const DepartmentList = () => {
               <DepartmentButtons
                 DepId={dep._id}
                 onDepartmentDelete={onDepartmentDelete}
-                canManage={isAdmin}
+                canManage={canManage}
               />
             ),
           }));
@@ -82,7 +82,7 @@ const DepartmentList = () => {
     };
 
     fetchDepartments();
-  }, [getToken, isAdmin]);
+  }, [getToken, canManage]);
 
   const filterDepartments = (e) => {
     const records = departments.filter((dep) =>
@@ -114,7 +114,7 @@ const DepartmentList = () => {
               onChange={filterDepartments}
             />
 
-            {isAdmin && (
+            {canManage && (
               <Link
                 to="/admin-dashboard/add-department"
                 className="px-4 py-2 bg-teal-600 rounded text-white hover:bg-teal-700"

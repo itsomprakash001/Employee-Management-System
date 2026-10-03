@@ -21,9 +21,7 @@ export const DepartmentButtons = ({
       const token = await getToken();
 
       if (!token) {
-        alert(
-          "Authentication token not found. Please login again."
-        );
+        alert("Authentication token not found. Please login again.");
         return;
       }
 
@@ -43,8 +41,7 @@ export const DepartmentButtons = ({
 
         const message = document.createElement("div");
 
-        message.innerText =
-          "Department deleted successfully!";
+        message.innerText = "Department deleted successfully!";
 
         message.className =
           "fixed top-5 right-5 bg-red-100 text-red-700 px-5 py-3 rounded-lg shadow-lg font-semibold z-50";

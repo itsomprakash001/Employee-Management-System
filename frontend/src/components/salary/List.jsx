@@ -52,16 +52,13 @@ const List = () => {
       );
 
       if (response.data.success) {
-        setSalaries(
-          response.data.salaries || []
-        );
+        setSalaries(response.data.salaries || []);
       }
     } catch (error) {
       console.log(
         "FETCH SALARY ERROR:",
         error.response?.status,
-        error.response?.data ||
-          error.message
+        error.response?.data || error.message
       );
 
       alert(
@@ -82,53 +79,51 @@ const List = () => {
       return false;
     }
 
-    // Employee cannot manage salary
-    if (user.role === "employee") {
+    if (salary.status === "Paid") {
       return false;
     }
 
-    const targetRole =
-      salary.employeeRole;
+    const targetRole = salary.employeeRole;
 
     if (!targetRole) {
       return false;
     }
 
-    return canManageRole(
-      user.role,
-      targetRole
-    );
+    if (user.role === "employee") {
+      return false;
+    }
+
+    return canManageRole(user.role, targetRole);
   };
 
-  const filteredSalaries =
-    salaries.filter((salary) => {
-      const searchText =
-        search.toLowerCase();
+  const filteredSalaries = salaries.filter((salary) => {
+    const searchText = search.toLowerCase().trim();
 
-      return (
-        salary.employeeId
-          ?.toLowerCase()
-          .includes(searchText) ||
-        salary.employeeName
-          ?.toLowerCase()
-          .includes(searchText) ||
-        salary.employeeRole
-          ?.toLowerCase()
-          .includes(searchText) ||
-        salary.department
-          ?.toLowerCase()
-          .includes(searchText)
-      );
-    });
+    if (!searchText) {
+      return true;
+    }
+
+    return (
+      salary.employeeId
+        ?.toLowerCase()
+        .includes(searchText) ||
+      salary.employeeName
+        ?.toLowerCase()
+        .includes(searchText) ||
+      salary.employeeRole
+        ?.toLowerCase()
+        .includes(searchText) ||
+      salary.department
+        ?.toLowerCase()
+        .includes(searchText)
+    );
+  });
 
   const canAddSalary =
     user &&
-    [
-      "admin",
-      "manager",
-      "hr",
-      "tl",
-    ].includes(user.role);
+    ["admin", "manager", "hr", "tl"].includes(
+      user.role
+    );
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -152,9 +147,7 @@ const List = () => {
           type="text"
           placeholder="Search employee, ID, role..."
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => setSearch(e.target.value)}
           className="w-80 border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500"
         />
       </div>
@@ -163,59 +156,24 @@ const List = () => {
         <table className="w-full text-sm">
           <thead className="bg-teal-600 text-white">
             <tr>
-              <th className="px-2 py-3">
-                Employee ID
-              </th>
-
-              <th className="px-2 py-3">
-                Employee Name
-              </th>
-
-              <th className="px-2 py-3">
-                Role
-              </th>
-
-              <th className="px-2 py-3">
-                Department
-              </th>
-
-              <th className="px-2 py-3">
-                Basic Salary
-              </th>
-
-              <th className="px-2 py-3">
-                Allowances
-              </th>
-
-              <th className="px-2 py-3">
-                Deductions
-              </th>
-
-              <th className="px-2 py-3">
-                Net Salary
-              </th>
-
-              <th className="px-2 py-3">
-                Pay Date
-              </th>
-
-              <th className="px-2 py-3">
-                Status
-              </th>
-
-              <th className="px-2 py-3">
-                Action
-              </th>
+              <th className="px-2 py-3">Employee ID</th>
+              <th className="px-2 py-3">Employee Name</th>
+              <th className="px-2 py-3">Role</th>
+              <th className="px-2 py-3">Department</th>
+              <th className="px-2 py-3">Basic Salary</th>
+              <th className="px-2 py-3">Allowances</th>
+              <th className="px-2 py-3">Deductions</th>
+              <th className="px-2 py-3">Net Salary</th>
+              <th className="px-2 py-3">Pay Date</th>
+              <th className="px-2 py-3">Status</th>
+              <th className="px-2 py-3">Action</th>
             </tr>
           </thead>
 
           <tbody>
             {filteredSalaries.length > 0 ? (
               filteredSalaries.map((salary) => {
-                const canEdit =
-                  canManageSalary(
-                    salary
-                  );
+                const canEdit = canManageSalary(salary);
 
                 return (
                   <tr
@@ -223,66 +181,69 @@ const List = () => {
                     className="border-b hover:bg-gray-50 text-center transition"
                   >
                     <td className="px-2 py-3">
-                      {salary.employeeId}
+                      {salary.employeeId || "N/A"}
                     </td>
 
                     <td className="px-2 py-3">
-                      {salary.employeeName ||
-                        "N/A"}
+                      {salary.employeeName || "N/A"}
                     </td>
 
                     <td className="px-2 py-3 capitalize">
-                      {salary.employeeRole ||
-                        "N/A"}
+                      {salary.employeeRole || "N/A"}
                     </td>
 
                     <td className="px-2 py-3">
-                      {salary.department ||
-                        "N/A"}
+                      {salary.department || "N/A"}
                     </td>
 
                     <td className="px-2 py-3 font-medium">
-                      ₹{salary.basicSalary}
+                      ₹
+                      {Number(
+                        salary.basicSalary || 0
+                      ).toLocaleString("en-IN")}
                     </td>
 
                     <td className="px-2 py-3">
-                      ₹{salary.allowances}
+                      ₹
+                      {Number(
+                        salary.allowances || 0
+                      ).toLocaleString("en-IN")}
                     </td>
 
                     <td className="px-2 py-3">
-                      ₹{salary.deductions}
+                      ₹
+                      {Number(
+                        salary.deductions || 0
+                      ).toLocaleString("en-IN")}
                     </td>
 
                     <td className="px-2 py-3 font-semibold text-teal-700">
-                      ₹{salary.netSalary}
+                      ₹
+                      {Number(
+                        salary.netSalary || 0
+                      ).toLocaleString("en-IN")}
                     </td>
 
                     <td className="px-2 py-3">
-                      {salary.payDate
-                        ? new Date(
-                            salary.payDate
-                          ).toLocaleDateString(
-                            "en-GB"
-                          )
-                        : "N/A"}
+                      {salary.payDate || "N/A"}
                     </td>
 
                     <td className="px-2 py-3">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          salary.status ===
-                          "Paid"
+                          salary.status === "Paid"
                             ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
                         }`}
                       >
-                        {salary.status}
+                        {salary.status || "Pending"}
                       </span>
                     </td>
 
                     <td className="px-2 py-3">
                       {canEdit ? (
                         <button
+                          type="button"
                           onClick={() =>
                             navigate(
                               `/admin-dashboard/salary/edit/${salary._id}`
@@ -294,7 +255,9 @@ const List = () => {
                         </button>
                       ) : (
                         <span className="text-gray-400 text-xs">
-                          View only
+                          {salary.status === "Paid"
+                            ? "Paid"
+                            : "View only"}
                         </span>
                       )}
                     </td>

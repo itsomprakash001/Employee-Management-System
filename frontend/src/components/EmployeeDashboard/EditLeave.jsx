@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
@@ -29,9 +28,7 @@ const EditLeave = () => {
         const token = await getToken();
 
         if (!token) {
-          alert(
-            "Authentication token not found. Please login again."
-          );
+          alert("Authentication token not found. Please login again.");
           return;
         }
 
@@ -47,15 +44,9 @@ const EditLeave = () => {
         if (response.data.success) {
           const data = response.data.leave;
 
-          // Only pending leaves can be edited
           if (data.status !== "Pending") {
-            alert(
-              "Only pending leave requests can be edited."
-            );
-
-            navigate(
-              "/employee-dashboard/my-leaves"
-            );
+            alert("Only pending leave requests can be edited.");
+            navigate("/employee-dashboard/my-leaves");
             return;
           }
 
@@ -74,8 +65,7 @@ const EditLeave = () => {
         console.log(
           "GET LEAVE ERROR:",
           error.response?.status,
-          error.response?.data ||
-            error.message
+          error.response?.data || error.message
         );
 
         alert(
@@ -83,9 +73,7 @@ const EditLeave = () => {
             "Unable to fetch leave details"
         );
 
-        navigate(
-          "/employee-dashboard/my-leaves"
-        );
+        navigate("/employee-dashboard/my-leaves");
       } finally {
         setLoading(false);
       }
@@ -93,13 +81,8 @@ const EditLeave = () => {
 
     if (getToken && id && user) {
       if (user.role !== "employee") {
-        alert(
-          "Only employees can edit their leave requests."
-        );
-
-        navigate(
-          "/employee-dashboard/my-leaves"
-        );
+        alert("Only employees can edit their leave requests.");
+        navigate("/employee-dashboard/my-leaves");
         return;
       }
 
@@ -120,9 +103,7 @@ const EditLeave = () => {
     e.preventDefault();
 
     if (!user || user.role !== "employee") {
-      alert(
-        "Only employees can update leave requests."
-      );
+      alert("Only employees can update leave requests.");
       return;
     }
 
@@ -131,9 +112,7 @@ const EditLeave = () => {
       leave.toDate &&
       leave.fromDate > leave.toDate
     ) {
-      alert(
-        "To Date cannot be earlier than From Date."
-      );
+      alert("To Date cannot be earlier than From Date.");
       return;
     }
 
@@ -153,9 +132,7 @@ const EditLeave = () => {
       const token = await getToken();
 
       if (!token) {
-        alert(
-          "Authentication token not found. Please login again."
-        );
+        alert("Authentication token not found. Please login again.");
         return;
       }
 
@@ -175,22 +152,17 @@ const EditLeave = () => {
       );
 
       if (response.data.success) {
-        setSuccessMessage(
-          "Leave updated successfully!"
-        );
+        setSuccessMessage("Leave updated successfully!");
 
         setTimeout(() => {
-          navigate(
-            "/employee-dashboard/my-leaves"
-          );
-        }, 1500);
+          navigate("/employee-dashboard/my-leaves");
+        }, 1200);
       }
     } catch (error) {
       console.log(
         "UPDATE LEAVE ERROR:",
         error.response?.status,
-        error.response?.data ||
-          error.message
+        error.response?.data || error.message
       );
 
       alert(
@@ -204,8 +176,8 @@ const EditLeave = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-gray-600 font-semibold">
+      <div className="min-h-full bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600 font-medium">
           Loading leave details...
         </div>
       </div>
@@ -214,13 +186,13 @@ const EditLeave = () => {
 
   if (!user || user.role !== "employee") {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-        <div className="bg-white shadow-lg rounded-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-2">
+      <div className="min-h-full bg-gray-50 flex items-center justify-center p-5">
+        <div className="bg-white rounded-xl shadow-md p-7 text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-2">
             Access Denied
           </h2>
 
-          <p className="text-gray-600">
+          <p className="text-sm text-gray-600">
             Only employees can edit their leave requests.
           </p>
         </div>
@@ -229,151 +201,202 @@ const EditLeave = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-xl p-6">
+    <div className="min-h-full bg-gray-50 p-5">
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-5">
+          <h1 className="text-3xl font-bold text-black">
+            Edit Leave Request
+          </h1>
 
-        <h2 className="text-2xl font-bold text-teal-700 mb-6">
-          Edit Leave Request
-        </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            Update your pending leave request
+          </p>
+        </div>
 
-        {successMessage && (
-          <div className="mb-5 p-3 rounded-lg bg-green-100 text-green-700 font-semibold text-center">
-            {successMessage}
-          </div>
-        )}
+        <div className="bg-white rounded-xl shadow-md p-6">
+          {successMessage && (
+            <div className="mb-5 p-3 rounded-lg bg-green-100 text-green-700 text-sm font-semibold text-center">
+              {successMessage}
+            </div>
+          )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-        >
-          <div>
-            <label
-              htmlFor="leaveType"
-              className="block mb-2 font-medium"
-            >
-              Leave Type
-            </label>
-
-            <select
-              id="leaveType"
-              name="leaveType"
-              value={leave.leaveType}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              required
-            >
-              <option value="">
-                Select Leave
-              </option>
-
-              <option value="Casual Leave">
-                Casual Leave
-              </option>
-
-              <option value="Sick Leave">
-                Sick Leave
-              </option>
-
-              <option value="Annual Leave">
-                Annual Leave
-              </option>
-
-              <option value="Emergency Leave">
-                Emergency Leave
-              </option>
-            </select>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
-                htmlFor="fromDate"
-                className="block mb-2 font-medium"
+                htmlFor="leaveType"
+                className="block text-sm font-semibold text-gray-700 mb-1.5"
               >
-                From Date
+                Leave Type
               </label>
 
-              <input
-                id="fromDate"
-                type="date"
-                name="fromDate"
-                value={leave.fromDate}
+              <select
+                id="leaveType"
+                name="leaveType"
+                value={leave.leaveType}
                 onChange={handleChange}
-                max={
-                  leave.toDate || undefined
-                }
-                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 required
-              />
+                className="
+                  w-full
+                  border
+                  border-gray-300
+                  rounded-lg
+                  px-3
+                  py-2.5
+                  text-sm
+                  outline-none
+                  focus:ring-2
+                  focus:ring-teal-500
+                "
+              >
+                <option value="">Select Leave Type</option>
+                <option value="Casual Leave">Casual Leave</option>
+                <option value="Sick Leave">Sick Leave</option>
+                <option value="Annual Leave">Annual Leave</option>
+                <option value="Emergency Leave">
+                  Emergency Leave
+                </option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="fromDate"
+                  className="block text-sm font-semibold text-gray-700 mb-1.5"
+                >
+                  From Date
+                </label>
+
+                <input
+                  id="fromDate"
+                  type="date"
+                  name="fromDate"
+                  value={leave.fromDate}
+                  onChange={handleChange}
+                  max={leave.toDate || undefined}
+                  required
+                  className="
+                    w-full
+                    border
+                    border-gray-300
+                    rounded-lg
+                    px-3
+                    py-2.5
+                    text-sm
+                    outline-none
+                    focus:ring-2
+                    focus:ring-teal-500
+                  "
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="toDate"
+                  className="block text-sm font-semibold text-gray-700 mb-1.5"
+                >
+                  To Date
+                </label>
+
+                <input
+                  id="toDate"
+                  type="date"
+                  name="toDate"
+                  value={leave.toDate}
+                  onChange={handleChange}
+                  min={leave.fromDate || undefined}
+                  required
+                  className="
+                    w-full
+                    border
+                    border-gray-300
+                    rounded-lg
+                    px-3
+                    py-2.5
+                    text-sm
+                    outline-none
+                    focus:ring-2
+                    focus:ring-teal-500
+                  "
+                />
+              </div>
             </div>
 
             <div>
               <label
-                htmlFor="toDate"
-                className="block mb-2 font-medium"
+                htmlFor="reason"
+                className="block text-sm font-semibold text-gray-700 mb-1.5"
               >
-                To Date
+                Reason
               </label>
 
-              <input
-                id="toDate"
-                type="date"
-                name="toDate"
-                value={leave.toDate}
+              <textarea
+                id="reason"
+                name="reason"
+                rows="3"
+                value={leave.reason}
                 onChange={handleChange}
-                min={
-                  leave.fromDate || undefined
-                }
-                className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                placeholder="Enter the reason for your leave..."
                 required
+                className="
+                  w-full
+                  border
+                  border-gray-300
+                  rounded-lg
+                  px-3
+                  py-2.5
+                  text-sm
+                  outline-none
+                  resize-none
+                  focus:ring-2
+                  focus:ring-teal-500
+                "
               />
             </div>
-          </div>
 
-          <div>
-            <label
-              htmlFor="reason"
-              className="block mb-2 font-medium"
-            >
-              Reason
-            </label>
+            <div className="flex justify-end gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate("/employee-dashboard/my-leaves")
+                }
+                className="
+                  px-4
+                  py-2.5
+                  rounded-lg
+                  bg-gray-500
+                  hover:bg-gray-600
+                  text-white
+                  text-sm
+                  font-semibold
+                  transition
+                "
+              >
+                Cancel
+              </button>
 
-            <textarea
-              id="reason"
-              name="reason"
-              rows="4"
-              value={leave.reason}
-              onChange={handleChange}
-              placeholder="Enter the reason for your leave..."
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-teal-500"
-              required
-            />
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                navigate(
-                  "/employee-dashboard/my-leaves"
-                )
-              }
-              className="px-5 py-2 rounded-lg bg-gray-500 hover:bg-gray-600 text-white transition cursor-pointer"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={updating}
-              className="px-5 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white transition cursor-pointer"
-            >
-              {updating
-                ? "Updating..."
-                : "Update Leave"}
-            </button>
-          </div>
-        </form>
+              <button
+                type="submit"
+                disabled={updating}
+                className="
+                  px-5
+                  py-2.5
+                  rounded-lg
+                  bg-teal-600
+                  hover:bg-teal-700
+                  disabled:bg-gray-400
+                  disabled:cursor-not-allowed
+                  text-white
+                  text-sm
+                  font-semibold
+                  transition
+                "
+              >
+                {updating ? "Updating..." : "Update Leave"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
